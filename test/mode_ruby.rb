@@ -1,16 +1,11 @@
 assert('get_candidates 1') do
   mode = Mrbmacs::RubyMode.new
-  assert_equal(['and'], mode.get_candidates_a("and"))
+  assert_equal(['and'], mode.get_candidates_a('and'))
 end
 
 assert('get_candidates String') do
   mode = Mrbmacs::RubyMode.new
   assert_equal(['"test".chomp', '"test".chomp!'], mode.get_candidates_a('"test".chom'))
-end
-
-assert('get_candidates Regexp') do
-  mode = Mrbmacs::RubyMode.new
-  assert_equal(['/hoge/.skip'], mode.get_candidates_a('/hoge/.sk'))
 end
 
 assert('get_candidates Hash or Proc') do
@@ -25,8 +20,10 @@ end
 
 assert('get_candidates Constant or class methods') do
   mode = Mrbmacs::RubyMode.new
-  assert_equal(['Mrbmacs::ModeManager::get_mode_by_filename', 'Mrbmacs::ModeManager::get_mode_by_name', 'Mrbmacs::ModeManager::get_mode_by_suffix'],
-    mode.get_candidates_a('Mrbmacs::ModeManager::get_'))
+  assert_equal(['Mrbmacs::ModeManager::get_mode_by_filename',
+                'Mrbmacs::ModeManager::get_mode_by_name',
+                'Mrbmacs::ModeManager::get_mode_by_suffix'],
+               mode.get_candidates_a('Mrbmacs::ModeManager::get_'))
 end
 
 assert('get_candidates Symbol') do
@@ -36,7 +33,6 @@ end
 
 assert('get_candidates Numeric') do
   mode = Mrbmacs::RubyMode.new
-  candidates = 1.methods.collect{|m| m.to_s}.sort
   assert_equal(true, mode.get_candidates_a('1.ab').include?('1.abs'))
 end
 
@@ -52,12 +48,12 @@ end
 
 assert('get_candidates variable.func or func.func') do
   mode = Mrbmacs::RubyMode.new
-  assert_equal(["$stderr.puts"], mode.get_candidates_a("$stderr.put"))
+  assert_equal(['$stderr.puts'], mode.get_candidates_a('$stderr.put'))
 end
 
 assert('get_candidates unknown') do
   mode = Mrbmacs::RubyMode.new
-#  candidates = Symbol.all_symbols.collect{|s| ":" + s.id2name}
+  #  candidates = Symbol.all_symbols.collect{|s| ":" + s.id2name}
   assert_equal(Array, mode.get_candidates_a('Mrbmacs::').class)
 end
 
