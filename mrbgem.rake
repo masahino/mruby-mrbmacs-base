@@ -10,7 +10,6 @@ MRuby::Gem::Specification.new('mruby-mrbmacs-base') do |spec|
 
   spec.add_dependency 'mruby-regexp-pcre'
   spec.add_dependency 'mruby-array-ext'
-  spec.add_dependency 'mruby-class-ext'
   spec.add_dependency 'mruby-enum-ext'
   spec.add_dependency 'mruby-symbol-ext'
   spec.add_dependency 'mruby-objectspace'
