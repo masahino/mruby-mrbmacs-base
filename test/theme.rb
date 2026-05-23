@@ -1,7 +1,5 @@
-require "#{File.dirname(__FILE__)}/test_helper.rb"
-
 assert('select theme') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   assert_equal('solarized-dark', app.theme.name)
 
   app.select_theme('solarized-light')

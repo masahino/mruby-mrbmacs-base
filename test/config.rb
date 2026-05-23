@@ -1,7 +1,5 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
-
 assert('Congig.new') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   config = Mrbmacs::Config.new
   assert_equal false, config.use_builtin_completion
   assert_equal false, config.use_builtin_indent

@@ -1,5 +1,3 @@
-require "#{File.dirname(__FILE__)}/test_helper.rb"
-
 module Mrbmacs
   # Test theme
   class TestTheme < SolarizedTheme

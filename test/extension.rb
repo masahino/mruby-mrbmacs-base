@@ -1,5 +1,3 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
-
 module Mrbmacs
   class Test1Extension < Extension
   end
@@ -9,6 +7,6 @@ module Mrbmacs
 end
 
 assert("subclasses") do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   assert_equal(3, Mrbmacs::Extension.subclasses.size)
 end

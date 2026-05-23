@@ -1,7 +1,5 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
-
 assert('set-mark') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   assert_equal(nil, app.mark_pos)
   app.set_mark
   assert_equal(0, app.mark_pos)
@@ -10,7 +8,7 @@ assert('set-mark') do
 end
 
 assert('copy-region') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.set_mark
   app.copy_region
   assert_equal(Scintilla::SCI_SETEMPTYSELECTION, app.frame.view_win.messages.pop)
@@ -18,7 +16,7 @@ assert('copy-region') do
 end
 
 assert('cut-region') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.cut_region
   assert_equal(nil, app.mark_pos)
   # cut all text
@@ -28,7 +26,7 @@ assert('cut-region') do
 end
 
 assert('kill-line') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.kill_line
   assert_equal(Scintilla::SCI_DELETERANGE, app.frame.view_win.messages.pop)
   app.frame.view_win.test_return[Scintilla::SCI_GETLINE] = "\n"
@@ -37,19 +35,19 @@ assert('kill-line') do
 end
 
 assert('beginning-of-buffer') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.beginning_of_buffer
   assert_equal(Scintilla::SCI_DOCUMENTSTART, app.frame.view_win.messages.pop)
 end
 
 assert('end-of-buffer') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.end_of_buffer
   assert_equal(Scintilla::SCI_DOCUMENTEND, app.frame.view_win.messages.pop)
 end
 
 assert('newline') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   win = app.frame.view_win
   win.test_return[Scintilla::SCI_AUTOCACTIVE] = 0
   app.newline
@@ -57,7 +55,7 @@ assert('newline') do
 end
 
 assert('keyboard-quit 1') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.set_mark
   assert_equal(0, app.mark_pos)
   app.keyboard_quit
@@ -65,7 +63,7 @@ assert('keyboard-quit 1') do
 end
 
 assert('keyboard-quit 2') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.keyboard_quit
   assert_nil(app.mark_pos)
 end
@@ -79,7 +77,7 @@ assert('isearch-backward') do
 end
 
 assert('indent') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   win = app.frame.view_win
   win.test_return[Scintilla::SCI_AUTOCACTIVE] = 1
   app.indent
@@ -90,12 +88,12 @@ assert('indent') do
 end
 
 assert('sava-buffers-kill-terminal') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   assert_nil(app.save_buffers_kill_terminal)
 end
 
 assert('clear-rectangle') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.mark_pos = nil
   app.clear_rectangle
   assert_equal(Scintilla::SCI_SETSELECTIONMODE, app.frame.view_win.messages.pop)
