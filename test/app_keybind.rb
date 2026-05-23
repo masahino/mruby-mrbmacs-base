@@ -1,7 +1,5 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
-
 assert('key_scan') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   assert_equal 'beginning_of_line', app.key_scan('C-a')
   assert_equal Scintilla::SCI_WORDLEFT, app.key_scan('M-b')
   assert_equal nil, app.key_scan('C-q')

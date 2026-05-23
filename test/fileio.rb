@@ -1,20 +1,18 @@
-require "#{File.dirname(__FILE__)}#{File::SEPARATOR}test_helper.rb"
-
 assert('insert-file nil') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.insert_file
   assert_equal 'no match', app.frame.echo_message
 end
 
 assert('insert-file') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   test_file = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
   app.insert_file(test_file)
   assert_equal(Scintilla::SCI_GOTOPOS, app.frame.view_win.messages.pop)
 end
 
 assert('insert-file new buffer') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   app.find_file('hoge')
   test_file = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
   app.insert_file(test_file)
@@ -22,7 +20,7 @@ assert('insert-file new buffer') do
 end
 
 assert('write-file') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   test_file = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.output"
   app.write_file(test_file)
   assert_equal(File.expand_path(test_file), app.current_buffer.filename)

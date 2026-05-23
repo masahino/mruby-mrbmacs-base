@@ -1,7 +1,5 @@
-require "#{File.dirname(__FILE__)}/test_helper.rb"
-
 assert('change mode') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   test_file = "#{File.dirname(__FILE__)}/test.input"
   app.find_file(test_file)
   assert_equal 'fundamental', app.current_buffer.mode.name
@@ -10,7 +8,7 @@ assert('change mode') do
 end
 
 assert('respond_to_missing?') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
 
   # Test responding to existing methods
   assert_true app.respond_to?(:SCI_PRESS)

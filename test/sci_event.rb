@@ -1,7 +1,5 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
-
 assert('add event') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   $test_data = 0
   app.add_sci_event(Scintilla::SCN_MODIFIED) do |app, scn|
     $test_data = 1
@@ -19,7 +17,7 @@ assert('add event') do
 end
 
 assert('add event with priority') do
-  app = Mrbmacs::ApplicationTest.new
+  app = Mrbmacs::TestSupport::Application.new
   $test_data = 0
   app.add_sci_event(Scintilla::SCN_ZOOM, 10) do |app, scn|
     $test_data = 1
