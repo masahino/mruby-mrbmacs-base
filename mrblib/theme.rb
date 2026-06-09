@@ -92,7 +92,8 @@ module Mrbmacs
     def self.find_by_name(name)
       theme = Theme
       ObjectSpace.each_object(Class) do |klass|
-        next unless klass < self
+        next if klass == self
+        next unless klass.ancestors.include?(self)
 
         if klass.class_variable_defined?(:@@theme_name) && (klass.class_variable_get(:@@theme_name) == name)
           theme = klass
@@ -105,7 +106,8 @@ module Mrbmacs
     def self.create_theme_list
       list = []
       ObjectSpace.each_object(Class) do |klass|
-        next unless klass < self
+        next if klass == self
+        next unless klass.ancestors.include?(self)
 
         list.push(klass.class_variable_get(:@@theme_name)) if klass.class_variable_defined? :@@theme_name
       end

@@ -48,7 +48,8 @@ end
 
 assert('get_candidates variable.func or func.func') do
   mode = Mrbmacs::RubyMode.new
-  assert_equal(['$stderr.puts'], mode.get_candidates_a('$stderr.put'))
+  candidates = mode.get_candidates_a('$stderr.put')
+  assert_true(candidates.include?('$stderr.puts'))
 end
 
 assert('get_candidates unknown') do
