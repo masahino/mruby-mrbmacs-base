@@ -48,6 +48,10 @@ assert('set_mode_by_filename') do
   assert_equal('ruby', Mrbmacs::ModeManager.set_mode_by_filename('.hogehoge.rb').name)
 end
 
+assert('set_mode_by_filename returns shared instance') do
+  assert_equal Mrbmacs::RubyMode.instance, Mrbmacs::ModeManager.set_mode_by_filename('hoge.rb')
+end
+
 assert('mode Class') do
   assert_equal Mrbmacs::RubyMode, Mrbmacs::ModeManager.set_mode_by_filename('a.rb').class
 end
@@ -55,6 +59,10 @@ end
 assert('get_mode_by_name') do
   assert_equal Mrbmacs::RubyMode.instance, Mrbmacs::ModeManager.get_mode_by_name('ruby')
   assert_equal nil, Mrbmacs::ModeManager.get_mode_by_name('default')
+end
+
+assert('mode subclass instance returns same object') do
+  assert_equal Mrbmacs::RubyMode.instance, Mrbmacs::RubyMode.instance
 end
 
 assert('add_mode') do

@@ -7,8 +7,8 @@ MRuby::Gem::Specification.new('mruby-mrbmacs-base') do |spec|
   spec.add_dependency 'mruby-io', core: 'mruby-io'
   spec.add_dependency 'mruby-dir'
   spec.add_dependency 'mruby-eval'
-
   spec.add_dependency 'mruby-regexp-pcre'
+
   spec.add_dependency 'mruby-array-ext'
   spec.add_dependency 'mruby-enum-ext'
   spec.add_dependency 'mruby-symbol-ext'
@@ -20,5 +20,4 @@ MRuby::Gem::Specification.new('mruby-mrbmacs-base') do |spec|
 
   spec.add_dependency 'mruby-os', github: 'masahino/mruby-os'
   spec.add_dependency 'mruby-process', mgem: 'mruby-process2'
-  spec.add_dependency 'mruby-singleton'
 end
