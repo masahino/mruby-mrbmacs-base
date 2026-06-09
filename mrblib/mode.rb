@@ -1,9 +1,14 @@
 module Mrbmacs
   # Mrbmacs::Mode
   class Mode
-    include Singleton
     attr_accessor :name, :lexer, :keyword_list, :indent, :use_tab, :tab_indent, :keymap,
                   :start_of_comment, :end_of_comment, :build_command, :use_builtin_formatting
+
+    class << self
+      def instance
+        @instance ||= new
+      end
+    end
 
     def initialize
       @name = 'default'
