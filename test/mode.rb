@@ -1,6 +1,7 @@
 assert('Mode.add_keybind') do
   mode = Mrbmacs::Mode.new
   mode.add_keybind('x', 'hoge')
+  assert_equal 'hoge', mode.keymap['x']
 end
 
 assert('Mode.instance returns same object') do
