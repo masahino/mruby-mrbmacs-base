@@ -63,6 +63,9 @@ module Mrbmacs
         color_indent_guide: [@@base03, @background_color, false, false],
         color_marker_breakpoint: [@@base08, @@base01, false, false],
         color_marker_current: [@@base0D, @@base01, false, false],
+        color_marker_vc_added: [@@base0B, @@base0B, false, false],
+        color_marker_vc_modified: [@@base0A, @@base0A, false, false],
+        color_marker_vc_deleted: [@@base08, @@base08, false, false],
         # frame
         color_mode_line: [@@base00, @@base04, false, false],
         color_mode_line_inactive: [@@base04, @@base03, false, false]

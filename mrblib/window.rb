@@ -1,6 +1,15 @@
 module Mrbmacs
   MARKERN_BREAKPOINT = 0
   MARKERN_CURRENT = 1
+  MARKERN_VC_ADDED = 2
+  MARKERN_VC_MODIFIED = 3
+  MARKERN_VC_DELETED = 4
+  MARKERMASK_LINE_NUMBER = (1 << MARKERN_BREAKPOINT) |
+                           (1 << MARKERN_CURRENT) |
+                           (1 << Scintilla::SC_MARKNUM_HISTORY_REVERTED_TO_ORIGIN) |
+                           (1 << Scintilla::SC_MARKNUM_HISTORY_SAVED) |
+                           (1 << Scintilla::SC_MARKNUM_HISTORY_MODIFIED) |
+                           (1 << Scintilla::SC_MARKNUM_HISTORY_REVERTED_TO_MODIFIED)
 
   # base
   class EditWindow
@@ -8,6 +17,7 @@ module Mrbmacs
 
     MARGIN_LINE_NUMBER = 0
     MARGIN_FOLDING = 1
+    MARGIN_VC = 2
 
     def initialize(frame, buffer, left, top, width, height)
       @frame = frame
@@ -58,10 +68,17 @@ module Mrbmacs
     def set_margin
       @sci.sci_set_margin_widthn(MARGIN_LINE_NUMBER,
                                  @sci.sci_text_width(Scintilla::STYLE_LINENUMBER, '_99999'))
+      @sci.sci_set_margin_maskn(MARGIN_LINE_NUMBER, MARKERMASK_LINE_NUMBER)
       @sci.sci_set_marginsensitiven(MARGIN_LINE_NUMBER, 1)
       #      @sci.sci_set_margin_widthn(1, 1)
       #      @sci.sci_set_margin_typen(1, 0)
       @sci.sci_set_margin_maskn(MARGIN_FOLDING, Scintilla::SC_MASK_FOLDERS)
+      @sci.sci_set_margin_typen(MARGIN_VC, Scintilla::SC_MARGIN_SYMBOL)
+      @sci.sci_set_margin_widthn(MARGIN_VC, 1)
+      vc_marker_mask = (1 << MARKERN_VC_ADDED) |
+                       (1 << MARKERN_VC_MODIFIED) |
+                       (1 << MARKERN_VC_DELETED)
+      @sci.sci_set_margin_maskn(MARGIN_VC, vc_marker_mask)
       @sci.sci_set_marginsensitiven(MARGIN_LINE_NUMBER, 1)
       @sci.sci_set_marginsensitiven(MARGIN_FOLDING, 1)
       @sci.sci_set_automatic_fold(Scintilla::SC_AUTOMATICFOLD_CLICK)
@@ -69,6 +86,9 @@ module Mrbmacs
       # margin markers for debug
       @sci.sci_marker_define(MARKERN_BREAKPOINT, Scintilla::SC_MARK_CIRCLE)
       @sci.sci_marker_define(MARKERN_CURRENT, Scintilla::SC_MARK_SHORTARROW)
+      @sci.sci_marker_define(MARKERN_VC_ADDED, Scintilla::SC_MARK_LEFTRECT)
+      @sci.sci_marker_define(MARKERN_VC_MODIFIED, Scintilla::SC_MARK_LEFTRECT)
+      @sci.sci_marker_define(MARKERN_VC_DELETED, Scintilla::SC_MARK_LEFTRECT)
     end
 
     def apply_theme_annotation(theme)
@@ -99,6 +119,16 @@ module Mrbmacs
       if theme.font_color[:color_marker_current]
         @sci.sci_marker_set_fore(Mrbmacs::MARKERN_CURRENT, theme.font_color[:color_marker_current][0])
         @sci.sci_marker_set_back(Mrbmacs::MARKERN_CURRENT, theme.font_color[:color_marker_current][1])
+      end
+      {
+        MARKERN_VC_ADDED => :color_marker_vc_added,
+        MARKERN_VC_MODIFIED => :color_marker_vc_modified,
+        MARKERN_VC_DELETED => :color_marker_vc_deleted
+      }.each do |marker, color|
+        next unless theme.font_color[color]
+
+        @sci.sci_marker_set_fore(marker, theme.font_color[color][0])
+        @sci.sci_marker_set_back(marker, theme.font_color[color][1])
       end
       @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_HISTORY_REVERTED_TO_ORIGIN, 0xBFA040)
       @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_HISTORY_SAVED, 0x00A000)

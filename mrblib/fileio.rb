@@ -58,6 +58,7 @@ module Mrbmacs
       else
         switch_to_buffer(Mrbmacs.get_buffer_from_path(@buffer_list, filename).name)
       end
+      vc_refresh_gutter
       after_find_file(self, filename)
     end
 
@@ -78,6 +79,7 @@ module Mrbmacs
         error = @current_buffer.mode.syntax_check(@frame.view_win)
         @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
       end
+      vc_refresh_gutter
       after_save_buffer(self, @current_buffer.filename)
     end
 

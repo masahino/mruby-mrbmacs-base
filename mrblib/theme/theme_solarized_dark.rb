@@ -59,6 +59,9 @@ module Mrbmacs
         color_linenumber: [@@base0, @@base02, false, false],
         color_caret_line: [@foreground_color, @@base02, false, false],
         color_indent_guide: [@@base01, @background_color, false, false],
+        color_marker_vc_added: [@@green, @@green, false, false],
+        color_marker_vc_modified: [@@yellow, @@yellow, false, false],
+        color_marker_vc_deleted: [@@red, @@red, false, false],
         # frame
         color_mode_line: [@@base03, @@base0, false, false],
         color_mode_line_inactive: [@@base0, @@base03, false, false]

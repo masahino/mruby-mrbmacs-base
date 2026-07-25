@@ -3,6 +3,48 @@ module Mrbmacs
   class VC
     attr_reader :type, :root_directory, :branch, :state
 
+    def self.parse_diff_hunks(output)
+      hunks = []
+      output.each_line do |line|
+        match = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/)
+        next if match.nil?
+
+        old_count = match[2].nil? ? 1 : match[2].to_i
+        new_count = match[4].nil? ? 1 : match[4].to_i
+        type = if old_count == 0
+                 :added
+               elsif new_count == 0
+                 :deleted
+               else
+                 :modified
+               end
+        hunks << {
+          type: type,
+          old_start: match[1].to_i,
+          old_count: old_count,
+          new_start: match[3].to_i,
+          new_count: new_count
+        }
+      end
+      hunks
+    end
+
+    def self.marker_lines(changes)
+      markers = []
+      changes.each do |change|
+        if change[:type] == :deleted
+          markers << [change[:type], [change[:new_start] - 1, 0].max]
+          next
+        end
+
+        first_line = [change[:new_start] - 1, 0].max
+        change[:new_count].times do |offset|
+          markers << [change[:type], first_line + offset]
+        end
+      end
+      markers
+    end
+
     def initialize(directory, runner = nil)
       @directory = File.expand_path(directory)
       @runner = runner || method(:run_git)
@@ -28,13 +70,25 @@ module Mrbmacs
     def diff(filename)
       return ['', 1] unless managed?
 
-      path = File.expand_path(filename)
-      root = @root_directory
-      prefix = root.end_with?(File::SEPARATOR) ? root : "#{root}#{File::SEPARATOR}"
-      return ["#{path} is outside the repository", 1] unless path.start_with?(prefix)
+      relative_path, error = repository_relative_path(filename)
+      return [error, 1] unless error.nil?
 
-      relative_path = path[prefix.length..-1]
-      execute(['diff', '--no-ext-diff', 'HEAD', '--', relative_path], root)
+      execute(['diff', '--no-ext-diff', 'HEAD', '--', relative_path], @root_directory)
+    end
+
+    def changes(filename)
+      return [[], 1] unless managed?
+
+      relative_path, error = repository_relative_path(filename)
+      return [[], 1] unless error.nil?
+
+      output, status = execute(
+        ['diff', '--no-ext-diff', '--unified=0', 'HEAD', '--', relative_path],
+        @root_directory
+      )
+      return [[], status] unless status == 0
+
+      [self.class.parse_diff_hunks(output), 0]
     end
 
     private
@@ -62,6 +116,15 @@ module Mrbmacs
       @runner.call(directory, arguments)
     end
 
+    def repository_relative_path(filename)
+      path = File.expand_path(filename)
+      root = @root_directory
+      prefix = root.end_with?(File::SEPARATOR) ? root : "#{root}#{File::SEPARATOR}"
+      return [nil, "#{path} is outside the repository"] unless path.start_with?(prefix)
+
+      [path[prefix.length..-1], nil]
+    end
+
     def run_git(directory, arguments)
       reader, writer = IO.pipe
       pid = nil
@@ -81,6 +144,32 @@ module Mrbmacs
   end
 
   module Command
+    def vc_refresh_gutter
+      view_win = @frame.view_win
+      [
+        MARKERN_VC_ADDED,
+        MARKERN_VC_MODIFIED,
+        MARKERN_VC_DELETED
+      ].each { |marker| view_win.sci_marker_delete_all(marker) }
+
+      return if @current_buffer.filename == ''
+
+      vcinfo = @current_buffer.vcinfo || VC.new(@current_buffer.directory)
+      return unless vcinfo.managed?
+
+      changes, status = vcinfo.changes(@current_buffer.filename)
+      return unless status == 0
+
+      marker_numbers = {
+        added: MARKERN_VC_ADDED,
+        modified: MARKERN_VC_MODIFIED,
+        deleted: MARKERN_VC_DELETED
+      }
+      VC.marker_lines(changes).each do |type, line|
+        view_win.sci_marker_add(line, marker_numbers[type])
+      end
+    end
+
     def vc_diff
       source_buffer = @current_buffer
       if source_buffer.filename == ''

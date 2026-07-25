@@ -70,6 +70,9 @@ module Mrbmacs
         color_indent_guide: [0xc0c0c0, @background_color, false, false],
         color_marker_breakpoint: [0xff0000, 0x404040, false, false],
         color_marker_current: [0x0000ff, 0x404040, false, false],
+        color_marker_vc_added: [0x00c000, 0x00c000, false, false],
+        color_marker_vc_modified: [0x00c0ff, 0x00c0ff, false, false],
+        color_marker_vc_deleted: [0x0000ff, 0x0000ff, false, false],
         # frame
         color_mode_line: [@background_color, 0xc0c0c0, false, false],
         color_mode_line_inactive: [0xc0c0c0, @background_color, false, false]
