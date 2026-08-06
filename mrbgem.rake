@@ -13,6 +13,7 @@ MRuby::Gem::Specification.new('mruby-mrbmacs-base') do |spec|
   spec.add_dependency 'mruby-enum-ext'
   spec.add_dependency 'mruby-symbol-ext'
   spec.add_dependency 'mruby-objectspace'
+  spec.add_dependency 'mruby-encoding'
 
   spec.add_dependency 'mruby-tiny-opt-parser'
   spec.add_dependency 'mruby-logger'
