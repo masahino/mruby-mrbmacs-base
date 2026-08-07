@@ -18,7 +18,7 @@ assert('set_margin defines VC markers and margin') do
 
   edit_win.set_margin
 
-  assert_equal 5, edit_win.sci.messages.count { |message| message == Scintilla::SCI_MARKERDEFINE }
+  assert_equal 9, edit_win.sci.messages.count { |message| message == Scintilla::SCI_MARKERDEFINE }
   assert_include edit_win.sci.messages, Scintilla::SCI_SETMARGINTYPEN
   assert_include edit_win.sci.messages, Scintilla::SCI_SETMARGINMASKN
 end
@@ -29,8 +29,12 @@ assert('set_margin keeps VC markers out of the line number margin') do
 
   edit_win.set_margin
 
-  assert_equal 1, edit_win.sci.messages.count { |message| message == Scintilla::SCI_SETMARGINTYPEN }
-  assert_equal 3, edit_win.sci.messages.count { |message| message == Scintilla::SCI_SETMARGINMASKN }
+  assert_equal 2, edit_win.sci.messages.count { |message| message == Scintilla::SCI_SETMARGINTYPEN }
+  assert_equal 4, edit_win.sci.messages.count { |message| message == Scintilla::SCI_SETMARGINMASKN }
+  Mrbmacs::CHANGE_HISTORY_MARKERS.each do |marker|
+    assert_equal 0, Mrbmacs::MARKERMASK_LINE_NUMBER & (1 << marker)
+    assert_true (Mrbmacs::MARKERMASK_CHANGE_HISTORY & (1 << marker)) != 0
+  end
 end
 
 assert('apply_theme sets VC marker colors') do
