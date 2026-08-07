@@ -8,7 +8,7 @@ module Mrbmacs
       @use_builtin_completion = false
       @use_builtin_indent = false
       @use_builtin_syntax_check = false
-      @theme = SolarizedDarkTheme
+      @theme = Base16DefaultDarkTheme
       @ext = {}
       @file_encodings = []
     end

@@ -1,6 +1,6 @@
 assert('select theme') do
   app = Mrbmacs::TestSupport::Application.new
-  assert_equal('solarized-dark', app.theme.name)
+  assert_equal('base16-default-dark', app.theme.name)
 
   app.select_theme('solarized-light')
   assert_equal('solarized-light', app.theme.name)
