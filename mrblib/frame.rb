@@ -64,10 +64,8 @@ module Mrbmacs
     end
 
     def show_annotation(line, _column, message, style = 254)
-      #      text = sprintf "line %d: %s", line, message
-      text = message
-      @view_win.sci_annotation_set_text(line - 1, text)
-      @view_win.sci_annotation_set_style(line - 1, style)
+      view_win.sci_annotation_set_text(line - 1, message)
+      view_win.sci_annotation_set_style(line - 1, style)
     end
 
     def sync_tab(buffername)
