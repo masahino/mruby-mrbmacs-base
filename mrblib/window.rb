@@ -190,6 +190,14 @@ module Mrbmacs
       end
       @sci.sci_set_sel_fore(true, theme.background_color)
       @sci.sci_set_sel_back(true, theme.foreground_color)
+      @sci.sci_set_element_colour(
+        Scintilla::SC_ELEMENT_SELECTION_INACTIVE_TEXT,
+        theme.background_color | 0xff000000
+      )
+      @sci.sci_set_element_colour(
+        Scintilla::SC_ELEMENT_SELECTION_INACTIVE_BACK,
+        theme.foreground_color | 0xff000000
+      )
     end
 
     def apply_theme(theme)

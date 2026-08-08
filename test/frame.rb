@@ -7,5 +7,13 @@ assert('apply_theme') do
   theme = Mrbmacs::SolarizedDarkTheme.new
   frame = Mrbmacs::TestSupport::Frame.new(nil)
   frame.apply_theme(theme)
-  assert_equal Scintilla::SCI_SETSELBACK, frame.view_win.messages.pop
+  assert_equal(
+    [
+      Scintilla::SCI_SETSELFORE,
+      Scintilla::SCI_SETSELBACK,
+      Scintilla::SCI_SETELEMENTCOLOUR,
+      Scintilla::SCI_SETELEMENTCOLOUR
+    ],
+    frame.view_win.messages.last(4)
+  )
 end
