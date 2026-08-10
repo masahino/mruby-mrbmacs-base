@@ -72,7 +72,7 @@ module Mrbmacs
     end
 
     def edit_win_from_buffer(buffer_name)
-      @edit_win_list.each do |w|
+      edit_win_list.each do |w|
         return w if w.buffer.name == buffer_name
       end
       nil
