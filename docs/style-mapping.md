@@ -139,13 +139,17 @@ related styles are grouped to keep the mapping reviewable.
 | `warning` | `SCE_C_TASKMARKER` |
 | `error` | `SCE_C_STRINGEOL`, `SCE_C_COMMENTDOCKEYWORDERROR` |
 
-Go, Java, and JavaScript use this common style table with language-specific
-profiles. Go enables raw backquoted strings. Java maps keyword set 1 and
-`SCE_C_WORD2` to `type`, enables text blocks and disables preprocessor syntax.
-JavaScript maps keyword set 1 and `SCE_C_WORD2` to `builtin`, enables template
-literals, dollar/hash identifiers, escapes, and regular-expression detection.
-Each profile owns its own keyword and documentation word lists; none inherits
-C++ keywords through its Mode class.
+Go, Java, JavaScript, Objective-C, and TypeScript use this common style table
+with language-specific profiles. Go enables raw backquoted strings. Java maps
+keyword set 1 and `SCE_C_WORD2` to `type`, enables text blocks and disables
+preprocessor syntax. JavaScript maps keyword set 1 and `SCE_C_WORD2` to
+`builtin`, enables template literals, dollar/hash identifiers, escapes, and
+regular-expression detection. Objective-C retains C/C++ preprocessor handling,
+adds `@` keywords, and maps framework types to `type`. TypeScript uses the
+JavaScript-oriented lexer properties but maps its built-in types to `type`.
+Each profile owns its own keyword and documentation word lists; only the
+Objective-C profile deliberately includes the C++ keyword list because
+Objective-C is a C language extension.
 
 ### CSS (`css`)
 

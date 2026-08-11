@@ -11,7 +11,9 @@ assert('cpp lexer modes share only CLikeMode editing behaviour') do
     Mrbmacs::CppMode.new,
     Mrbmacs::GoMode.new,
     Mrbmacs::JavaMode.new,
-    Mrbmacs::JavascriptMode.new
+    Mrbmacs::JavascriptMode.new,
+    Mrbmacs::ObjectivecMode.new,
+    Mrbmacs::TypescriptMode.new
   ]
 
   modes.each do |mode|
@@ -22,4 +24,6 @@ assert('cpp lexer modes share only CLikeMode editing behaviour') do
   assert_equal Mrbmacs::GO_LEXER_PROFILE, modes[1].lexer_profile
   assert_equal Mrbmacs::JAVA_LEXER_PROFILE, modes[2].lexer_profile
   assert_equal Mrbmacs::JAVASCRIPT_LEXER_PROFILE, modes[3].lexer_profile
+  assert_equal Mrbmacs::OBJECTIVEC_LEXER_PROFILE, modes[4].lexer_profile
+  assert_equal Mrbmacs::TYPESCRIPT_LEXER_PROFILE, modes[5].lexer_profile
 end
