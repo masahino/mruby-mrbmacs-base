@@ -1,0 +1,37 @@
+---
+# Line comment, keys, scalars, anchors, aliases, tags, and operators.
+name: mrbmacs
+enabled: true
+disabled: false
+missing: null
+count: 17
+ratio: 1.25e2
+quoted: "line one\nline two"
+single_quoted: 'literal value'
+
+defaults: &defaults
+  foreground: "#839496"
+  background: "#002b36"
+
+dark_theme:
+  <<: *defaults
+  name: solarized-dark
+
+items:
+  - lexer
+  - theme
+  - { role: keyword, color: base0E }
+
+literal: |
+  multiple lines
+  preserve newlines
+
+folded: >
+  multiple lines become
+  one logical line
+
+tagged: !!str 17
+...
+
+# Intentional malformed flow collection for SCE_YAML_ERROR.
+broken: [one, two

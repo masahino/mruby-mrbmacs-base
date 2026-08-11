@@ -19,3 +19,13 @@ end
 assert('Mode.new is separate from Mode.instance') do
   assert_true(Mrbmacs::Mode.new != Mrbmacs::Mode.instance)
 end
+
+assert('Mode delegates lexer configuration to its profile') do
+  mode = Mrbmacs::Mode.new
+  view = Object.new
+  selected = nil
+  view.define_singleton_method(:sci_set_lexer_language) { |lexer| selected = lexer }
+
+  mode.apply_lexer(view)
+  assert_equal Mrbmacs::FUNDAMENTAL_LEXER_PROFILE.lexer, selected
+end

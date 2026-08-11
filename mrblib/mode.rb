@@ -1,8 +1,9 @@
 module Mrbmacs
   # Mrbmacs::Mode
   class Mode
-    attr_accessor :name, :lexer, :keyword_list, :indent, :use_tab, :tab_indent, :keymap,
-                  :start_of_comment, :end_of_comment, :build_command, :use_builtin_formatting
+    attr_accessor :name, :indent, :use_tab, :tab_indent, :keymap,
+                  :start_of_comment, :end_of_comment, :build_command, :use_builtin_formatting,
+                  :lexer_profile
 
     class << self
       def instance
@@ -12,12 +13,10 @@ module Mrbmacs
 
     def initialize
       @name = 'default'
-      @keyword_list = ''
-      @style = [:color_default]
       @indent = 2
       @use_tab = false
       @tab_indent = 0
-      @lexer = @name
+      @lexer_profile = FUNDAMENTAL_LEXER_PROFILE
       @keymap = {}
       @start_of_comment = ''
       @end_of_comment = ''
@@ -26,21 +25,19 @@ module Mrbmacs
     end
 
     def apply_lexer(view_win)
-      return if @lexer.nil?
-
-      view_win.sci_set_lexer_language(@name)
+      @lexer_profile.apply(view_win)
     end
 
-    def apply_theme(view_win, theme)
-      @style.each_with_index do |style_name, i|
-        next if style_name.nil?
+    def lexer
+      @lexer_profile.lexer
+    end
 
-        color = theme.font_color[style_name]
-        view_win.sci_style_set_fore(i, color[0])   # foreground
-        view_win.sci_style_set_back(i, color[1])   # background
-        view_win.sci_style_set_italic(i, color[2]) # italic
-        view_win.sci_style_set_bold(i, color[3])   # bold
-      end
+    def completion_keyword_list
+      @lexer_profile.keyword_sets[0] || ''
+    end
+
+    def apply_theme(view_win, theme, overrides = nil)
+      StyleResolver.new(theme, overrides).apply(view_win, @lexer_profile)
     end
 
     def config
@@ -68,7 +65,7 @@ module Mrbmacs
     end
 
     def get_candidates(_input)
-      @keyword_list.tr(' ', @frame.echo_win.sci.autoc_get_separator.chr)
+      completion_keyword_list.tr(' ', @frame.echo_win.sci.autoc_get_separator.chr)
     end
 
     def get_completion_list(view_win)
@@ -99,8 +96,7 @@ module Mrbmacs
     def initialize
       super
       @name = 'fundamental'
-      @lexer = 'indent'
-      @style = [:color_default]
+      @lexer_profile = FUNDAMENTAL_LEXER_PROFILE
     end
   end
 end

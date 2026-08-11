@@ -85,7 +85,8 @@ module Mrbmacs
     end
 
     def apply_theme_to_mode(mode, edit_win, theme)
-      mode.apply_theme(edit_win.sci, theme)
+      mode.apply_lexer(edit_win.sci)
+      mode.apply_theme(edit_win.sci, theme, @config.styles)
       edit_win.apply_mode_settings(mode)
     end
   end

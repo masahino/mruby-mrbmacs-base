@@ -92,6 +92,19 @@ module Mrbmacs
       end
     end
 
+    # Resolve a semantic syntax role through the legacy theme table. Role
+    # inheritance keeps existing themes usable when a newer role is requested.
+    def syntax_style(role)
+      StyleRole.ancestors(role).each do |candidate|
+        legacy_name = StyleRole.legacy_name(candidate)
+        next unless legacy_name
+
+        style = StyleSpec.from_legacy(@font_color[legacy_name])
+        return style if style
+      end
+      nil
+    end
+
     def self.find_by_name(name)
       theme = Theme
       ObjectSpace.each_object(Class) do |klass|

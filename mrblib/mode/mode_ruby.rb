@@ -4,48 +4,8 @@ module Mrbmacs
     def initialize
       super
       @name = 'ruby'
-      @lexer = 'ruby'
-      @keyword_list = 'attr_accessor attr_reader attr_writer module_function begin break elsif module retry unless end case next return until class ensure nil self when def false not super while alias defined? for or then yield and do if redo true else in rescue undef'
       @start_of_comment = '# '
-      # Define styles using Scintilla constants for Ruby lexer
-      @style[Scintilla::SCE_RB_DEFAULT] = :color_default
-      @style[Scintilla::SCE_RB_ERROR] = :color_warning
-      @style[Scintilla::SCE_RB_COMMENTLINE] = :color_comment
-      @style[Scintilla::SCE_RB_POD] = :color_comment
-      @style[Scintilla::SCE_RB_NUMBER] = :color_constant
-      @style[Scintilla::SCE_RB_WORD] = :color_keyword
-      @style[Scintilla::SCE_RB_STRING] = :color_string
-      @style[Scintilla::SCE_RB_CHARACTER] = :color_string
-      @style[Scintilla::SCE_RB_CLASSNAME] = :color_type
-      @style[Scintilla::SCE_RB_DEFNAME] = :color_function_name
-      @style[Scintilla::SCE_RB_OPERATOR] = :color_builtin
-      @style[Scintilla::SCE_RB_IDENTIFIER] = :color_default
-      @style[Scintilla::SCE_RB_REGEX] = :color_regexp
-      @style[Scintilla::SCE_RB_GLOBAL] = :color_variable_name
-      @style[Scintilla::SCE_RB_SYMBOL] = :color_string
-      @style[Scintilla::SCE_RB_MODULE_NAME] = :color_type
-      @style[Scintilla::SCE_RB_INSTANCE_VAR] = :color_variable_name
-      @style[Scintilla::SCE_RB_CLASS_VAR] = :color_variable_name
-      @style[Scintilla::SCE_RB_BACKTICKS] = :color_negation_char
-      @style[Scintilla::SCE_RB_DATASECTION] = :color_default
-      @style[Scintilla::SCE_RB_HERE_DELIM] = :color_default
-      @style[Scintilla::SCE_RB_HERE_Q] = :color_default
-      @style[Scintilla::SCE_RB_HERE_QQ] = :color_default
-      @style[Scintilla::SCE_RB_HERE_QX] = :color_default
-      @style[Scintilla::SCE_RB_STRING_Q] = :color_default
-      @style[Scintilla::SCE_RB_STRING_QQ] = :color_default
-      @style[Scintilla::SCE_RB_STRING_QX] = :color_default
-      @style[Scintilla::SCE_RB_STRING_QR] = :color_default
-      @style[Scintilla::SCE_RB_STRING_QW] = :color_default
-      @style[Scintilla::SCE_RB_WORD_DEMOTED] = :color_default
-      @style[Scintilla::SCE_RB_STDIN] = :color_default
-      @style[Scintilla::SCE_RB_STDOUT] = :color_default
-      @style[Scintilla::SCE_RB_STDERR] = :color_default
-      @style[Scintilla::SCE_RB_STRING_W] = :color_default
-      @style[Scintilla::SCE_RB_STRING_I] = :color_default
-      @style[Scintilla::SCE_RB_STRING_QI] = :color_default
-      @style[Scintilla::SCE_RB_STRING_QS] = :color_default
-      @style[Scintilla::SCE_RB_UPPER_BOUND] = :color_default
+      @lexer_profile = RUBY_LEXER_PROFILE
     end
 
     def get_indent(view_win)
@@ -233,7 +193,7 @@ module Mrbmacs
 
       else
         candidates = eval('methods | private_methods | local_variables | instance_variables | Object.constants').collect { |m| m.to_s }
-        reserved_words = @keyword_list.split(' ')
+        reserved_words = completion_keyword_list.split(' ')
         (candidates | reserved_words).grep(/^#{Regexp.quote(input)}/).sort
       end
     end

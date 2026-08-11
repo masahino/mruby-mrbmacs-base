@@ -38,7 +38,6 @@ module Mrbmacs
         mode_class_name = "#{mode_name.capitalize}Mode"
         if Mrbmacs.const_defined?(mode_class_name)
           @current_buffer.mode = Mrbmacs.const_get(mode_class_name).new
-          @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
           apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
         end
       end

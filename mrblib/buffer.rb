@@ -102,7 +102,6 @@ module Mrbmacs
   # Application
   class Application
     def update_buffer_mode(buffer)
-      buffer.mode.apply_lexer(@frame.view_win)
       apply_theme_to_mode(buffer.mode, @frame.edit_win, @theme)
     end
 

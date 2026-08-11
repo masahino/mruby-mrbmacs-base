@@ -13,6 +13,20 @@ assert('apply_theme') do
   )
 end
 
+assert('init_buffer only attaches the document') do
+  app = Mrbmacs::TestSupport::Application.new
+  buffer = app.current_buffer
+  calls = []
+  view = Object.new
+  view.define_singleton_method(:sci_set_docpointer) { |pointer| calls << [:docpointer, pointer] }
+  edit_win = Mrbmacs::EditWindow.new(app.frame, buffer, 0, 0, 0, 0)
+  edit_win.sci = view
+
+  edit_win.init_buffer(buffer)
+
+  assert_equal [[:docpointer, buffer.docpointer]], calls
+end
+
 assert('set_marign') do
   app = Mrbmacs::TestSupport::Application.new
   edit_win = Mrbmacs::TestSupport::EditWindow.new(app.frame, app.current_buffer, 0, 0, 0, 0)

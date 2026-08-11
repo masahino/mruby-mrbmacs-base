@@ -46,7 +46,6 @@ module Mrbmacs
         @current_buffer = new_buffer
         add_buffer_to_frame(@current_buffer)
         open_file(filename)
-        @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
         apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
         @frame.set_buffer_name(@current_buffer.name)
         @frame.edit_win.buffer = @current_buffer
@@ -91,7 +90,6 @@ module Mrbmacs
 
       @current_buffer.update_filename(filename)
       save_buffer
-      @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
       apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
       @frame.set_buffer_name(@current_buffer.name)
     end

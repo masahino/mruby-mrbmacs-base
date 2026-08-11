@@ -1,0 +1,27 @@
+% Line comment and document commands.
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\newcommand{\mrbmacs}{\textbf{mrbmacs}}
+
+\begin{document}
+
+\section{Style preview}
+Ordinary text, \emph{emphasis}, \mrbmacs{}, and an escaped symbol \%.
+
+Inline math uses $E = mc^2$ and displayed math uses
+\[
+  \sum_{i=1}^{n} i = \frac{n(n+1)}{2}.
+\]
+
+\begin{verbatim}
+literal \commands{} and $math$ are not interpreted
+\end{verbatim}
+
+\begin{equation}
+  f(x) = \int_0^x t^2\,dt
+\end{equation}
+
+\end{document}
+
+% Intentionally unmatched command delimiter for error-style inspection.
+\section{unfinished
