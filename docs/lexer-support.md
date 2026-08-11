@@ -1,7 +1,9 @@
 # Language and Lexer Support
 
-This document records the relationship between file detection, mrbmacs modes,
-`LexerProfile`, and Lexilla lexers.
+This developer reference records the relationship between file detection,
+mrbmacs modes, `LexerProfile`, and Lexilla lexers. The user-facing list of
+supported languages and file extensions is maintained in
+[`mrbmacs/docs/language-support.md`](https://github.com/masahino/mrbmacs/blob/main/docs/language-support.md).
 
 ## Reference version
 
