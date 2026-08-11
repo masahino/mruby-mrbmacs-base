@@ -37,6 +37,38 @@ assert('get_mode_by_filename') do
   assert_equal('lisp', Mrbmacs::ModeManager.get_mode_by_filename('.lisp'))
 end
 
+assert('style preview filenames select their intended modes') do
+  previews = {
+    'bash.sh' => 'bash',
+    'cpp.cpp' => 'cpp',
+    'css.css' => 'css',
+    'diff.diff' => 'diff',
+    'go.go' => 'go',
+    'haskell.hs' => 'haskell',
+    'html.html' => 'html',
+    'java.java' => 'java',
+    'javascript.js' => 'javascript',
+    'json.json' => 'json',
+    'lisp.lisp' => 'lisp',
+    'lua.lua' => 'lua',
+    'Makefile' => 'make',
+    'markdown.md' => 'markdown',
+    'perl.pl' => 'perl',
+    'pov.pov' => 'pov',
+    'python.py' => 'python',
+    'r.r' => 'r',
+    'ruby.rb' => 'ruby',
+    'rust.rs' => 'rust',
+    'tex.tex' => 'latex',
+    'xml.xml' => 'xml',
+    'yaml.yaml' => 'yaml'
+  }
+
+  previews.each do |filename, mode|
+    assert_equal mode, Mrbmacs::ModeManager.get_mode_by_filename(filename)
+  end
+end
+
 assert('set_mode_by_filename') do
   assert_equal('ruby', Mrbmacs::ModeManager.set_mode_by_filename('hoge.rb').name)
   assert_equal('ruby', Mrbmacs::ModeManager.set_mode_by_filename('foo.bar.rb').name)

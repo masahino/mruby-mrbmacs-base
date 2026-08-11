@@ -1,52 +1,41 @@
 module Mrbmacs
   # mode for preview-theme
   class PreviewthemeMode < Mode
-    attr_reader :style
-
     def initialize
       super
       @name = 'previewtheme'
-      @lexer = nil
-      @keyword_list = ''
-      @style = [
-        :color_default,
-        :color_builtin,
-        :color_comment,
-        :color_constant,
-        :color_function_name,
-        :color_keyword,
-        :color_string,
-        :color_type,
-        :color_variable_name,
-        :color_warning,
-        :color_preprocessor,
-        :color_regexp,
-        :color_doc,
-        :color_doc_string,
-        :color_color_constant,
-        :color_comment_delimiter,
-        :color_negation_char,
-        :color_other_type,
-        :color_regexp_grouping_construct,
-        :color_special_keyword,
-        :color_exit,
-        :color_other_emphasized,
-        :color_regexp_grouping_backslash,
-        :color_brace_highlight,
-        :color_annotation,
-        :color_annotation_info,
-        :color_annotation_warn,
-        :color_annotation_error,
-        :color_linenumber,
-        :color_caret_line,
-        :color_indent_guide
-      ]
-      #      @keymap['Enter'] = 'compilation_open_file'
+      @lexer_profile = PREVIEW_THEME_LEXER_PROFILE
     end
 
-    def set_style(view_win, theme)
-      super
-      view_win.sci_set_property('fold.compact', '1')
+    def apply_theme(view_win, theme, _overrides = nil)
+      preview_entries(theme).each_with_index do |entry, style_number|
+        apply_preview_style(view_win, style_number, entry[1])
+      end
+    end
+
+    def preview_sections(theme)
+      [
+        ['Semantic syntax roles', syntax_entries(theme)],
+        ['Theme UI settings', ui_entries(theme)]
+      ]
+    end
+
+    def preview_entries(theme)
+      preview_sections(theme).flat_map { |section| section[1] }
+    end
+
+    def syntax_entries(theme)
+      syntax_roles.map { |role| [role, theme.syntax_style(role)] }.select { |entry| entry[1] }
+    end
+
+    def ui_entries(theme)
+      theme.font_color.each_with_object([]) do |entry, result|
+        name, value = entry
+        next if syntax_theme_keys.include?(name)
+
+        style = StyleSpec.from_legacy(value)
+        result << [name, style] if style
+      end
     end
 
     def end_of_block?(line)
@@ -55,6 +44,23 @@ module Mrbmacs
       else
         false
       end
+    end
+
+    private
+
+    def syntax_roles
+      (StyleRole::LEGACY_NAMES.keys + StyleRole::PARENTS.keys).uniq
+    end
+
+    def syntax_theme_keys
+      StyleRole::LEGACY_NAMES.values
+    end
+
+    def apply_preview_style(view_win, style_number, style)
+      view_win.sci_style_set_fore(style_number, style.foreground) unless style.foreground.nil?
+      view_win.sci_style_set_back(style_number, style.background) unless style.background.nil?
+      view_win.sci_style_set_italic(style_number, style.italic) unless style.italic.nil?
+      view_win.sci_style_set_bold(style_number, style.bold) unless style.bold.nil?
     end
   end
 end

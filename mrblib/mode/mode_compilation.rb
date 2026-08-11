@@ -1,29 +1,11 @@
 module Mrbmacs
   # compilation mode
   class CompilationMode < Mode
-    SCE_STYLE_DEFAULT = 0
-    SCE_STYLE_ERROR = 1
-    SCE_STYLE_FILE = 2
-    SCE_STYLE_NUMBER = 3
     def initialize
       super
       @name = 'compilation'
-      @lexer = nil
-      @keyword_list = ''
-      @style = [
-        :color_default,       # 0: default
-        :color_warning,       # 1: error message
-        :color_function_name, # 2: file path
-        :color_keyword,       # 3: number
-        :color_string,        # 4: reserve
-        :color_comment        # 5: reserve
-      ]
+      @lexer_profile = COMPILATION_LEXER_PROFILE
       @keymap['Enter'] = 'compilation_open_file'
-    end
-
-    def set_style(view_win, theme)
-      super
-      view_win.sci_set_property('fold.compact', '1')
     end
 
     def end_of_block?(line)
@@ -48,15 +30,15 @@ module Mrbmacs
         # /foo/bar/baz/hoge.rb:7:7: syntax error, unexpected keyword_end
         #          if line =~ /^(\/.+):(\d+):(\d+): (.+)$/
         if line =~ /^(\/.+):(\d+):(\d+): (.+)$/
-          app.frame.view_win.sci_set_styling(Regexp.last_match[1].length, SCE_STYLE_FILE) # file
-          app.frame.view_win.sci_set_styling(1, SCE_STYLE_DEFAULT) # :
-          app.frame.view_win.sci_set_styling(Regexp.last_match[2].to_s.length, SCE_STYLE_NUMBER) # line
-          app.frame.view_win.sci_set_styling(1, SCE_STYLE_DEFAULT) # :
-          app.frame.view_win.sci_set_styling(Regexp.last_match[3].to_s.length, SCE_STYLE_NUMBER) # col
-          app.frame.view_win.sci_set_styling(2, SCE_STYLE_DEFAULT) # :
-          app.frame.view_win.sci_set_styling(Regexp.last_match[4].length, SCE_STYLE_ERROR) # message
+          app.frame.view_win.sci_set_styling(Regexp.last_match[1].length, COMPILATION_STYLE_FILE) # file
+          app.frame.view_win.sci_set_styling(1, COMPILATION_STYLE_DEFAULT) # :
+          app.frame.view_win.sci_set_styling(Regexp.last_match[2].to_s.length, COMPILATION_STYLE_NUMBER) # line
+          app.frame.view_win.sci_set_styling(1, COMPILATION_STYLE_DEFAULT) # :
+          app.frame.view_win.sci_set_styling(Regexp.last_match[3].to_s.length, COMPILATION_STYLE_NUMBER) # col
+          app.frame.view_win.sci_set_styling(2, COMPILATION_STYLE_DEFAULT) # :
+          app.frame.view_win.sci_set_styling(Regexp.last_match[4].length, COMPILATION_STYLE_ERROR) # message
         else
-          app.frame.view_win.sci_set_styling(line_length, SCE_STYLE_DEFAULT)
+          app.frame.view_win.sci_set_styling(line_length, COMPILATION_STYLE_DEFAULT)
         end
       end
     end

@@ -1,0 +1,30 @@
+/* Comment, directive, variables, selectors, attributes, and values. */
+@import url("theme.css");
+
+:root {
+  --accent-color: #268bd2;
+  --spacing: 0.75rem;
+}
+
+html,
+body.preview-page {
+  margin: 0;
+  color: rgb(101 123 131);
+}
+
+#editor > .pane[data-active="true"]::before {
+  content: "mrbmacs\a style preview";
+  color: var(--accent-color) !important;
+  padding: calc(var(--spacing) * 2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .pane:hover:not(.disabled) {
+    background: linear-gradient(90deg, #002b36, #073642);
+  }
+}
+
+/* Deliberately unknown property and pseudo-class for error styles. */
+.preview:unknown-state {
+  not-a-real-property: 17;
+}

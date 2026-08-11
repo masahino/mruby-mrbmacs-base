@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>mrbmacs &amp; Lexilla preview</title>
+  <style>
+    .preview { color: #336699; }
+  </style>
+</head>
+<body>
+  <!-- HTML comment and known elements/attributes. -->
+  <main id="preview" data-version="17">
+    <h1>HTML style preview</h1>
+    <p hidden>Entity: &copy;</p>
+  </main>
+
+  <script type="module">
+    /** Embedded JavaScript documentation. */
+    const pattern = /mrbmacs\s+(?<version>\d+)/giu;
+    const render = (name) => `${name ?? "preview"}: ${pattern.test(name)}`;
+    console.log(render("mrbmacs 17"));
+  </script>
+
+  <?php
+  // Embedded PHP comment.
+  $message = "hello {$name}";
+  echo $message;
+  ?>
+
+  <script type="text/python">
+  # Embedded Python comment.
+  class Preview:
+      def message(self):
+          return "hello"
+  </script>
+
+  <unknown-element mystery="value">Unknown tag and attribute</unknown-element>
+</body>
+</html>

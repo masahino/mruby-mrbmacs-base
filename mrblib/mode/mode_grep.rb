@@ -1,32 +1,14 @@
 module Mrbmacs
   # grep
   class GrepMode < Mode
-    attr_reader :pattern
+    attr_accessor :pattern
 
-    SCE_STYLE_DEFAULT = 0
-    SCE_STYLE_FILE = 1
-    SCE_STYLE_NUMBER = 2
-    SCE_STYLE_PATTERN = 3
     def initialize
       super
       @name = 'grep'
-      @lexer = nil
-      @keyword_list = ''
-      @style = [
-        :color_default,       # 0: default
-        :color_function_name, # 1: file path
-        :color_keyword,       # 2: number
-        :color_warning,       # 3: pattern
-        :color_string,        # 4: reserve
-        :color_comment        # 5: reserve
-      ]
+      @lexer_profile = GREP_LEXER_PROFILE
       @keymap['Enter'] = 'grep_open_file'
       @pattern = ''
-    end
-
-    def set_style(view_win, theme)
-      super
-      view_win.sci_set_property('fold.compact', '1')
     end
 
     def end_of_block?(_line)
@@ -48,15 +30,15 @@ module Mrbmacs
         line = app.frame.view_win.sci_get_line(i)
         # /foo/bar/baz/hoge.rb:7: syntax error, unexpected keyword_end
         if line =~ /^(.+):(\d+):(.*)(#{pattern})(.*)$/
-          app.frame.view_win.sci_set_styling(Regexp.last_match[1].length, SCE_STYLE_FILE) # file
-          app.frame.view_win.sci_set_styling(1, SCE_STYLE_DEFAULT) # :
-          app.frame.view_win.sci_set_styling(Regexp.last_match[2].to_s.length, SCE_STYLE_NUMBER) # line
-          app.frame.view_win.sci_set_styling(1, SCE_STYLE_DEFAULT) # :
-          app.frame.view_win.sci_set_styling(Regexp.last_match[3].length, SCE_STYLE_DEFAULT) # normal text
-          app.frame.view_win.sci_set_styling(Regexp.last_match[4].length, SCE_STYLE_PATTERN) # match pattern
-          app.frame.view_win.sci_set_styling(Regexp.last_match[5].length, SCE_STYLE_DEFAULT) # match pattern
+          app.frame.view_win.sci_set_styling(Regexp.last_match[1].length, GREP_STYLE_FILE) # file
+          app.frame.view_win.sci_set_styling(1, GREP_STYLE_DEFAULT) # :
+          app.frame.view_win.sci_set_styling(Regexp.last_match[2].to_s.length, GREP_STYLE_NUMBER) # line
+          app.frame.view_win.sci_set_styling(1, GREP_STYLE_DEFAULT) # :
+          app.frame.view_win.sci_set_styling(Regexp.last_match[3].length, GREP_STYLE_DEFAULT) # normal text
+          app.frame.view_win.sci_set_styling(Regexp.last_match[4].length, GREP_STYLE_PATTERN) # match pattern
+          app.frame.view_win.sci_set_styling(Regexp.last_match[5].length, GREP_STYLE_DEFAULT) # match pattern
         else
-          app.frame.view_win.sci_set_styling(line_length, SCE_STYLE_DEFAULT)
+          app.frame.view_win.sci_set_styling(line_length, GREP_STYLE_DEFAULT)
         end
       end
     end

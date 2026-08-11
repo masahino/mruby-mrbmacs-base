@@ -1,0 +1,17 @@
+diff --git a/lib/theme.rb b/lib/theme.rb
+index 1111111..2222222 100644
+--- a/lib/theme.rb
++++ b/lib/theme.rb
+@@ -1,7 +1,9 @@
+ class Theme
+-  COLOR = "old"
++  # Added comment
++  COLOR = "new"
+
+   def name
+-    "legacy"
++    "semantic"
+   end
+ end
+Only in examples: style-preview
+Binary files a/icon.png and b/icon.png differ
