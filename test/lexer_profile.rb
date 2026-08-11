@@ -80,11 +80,13 @@ assert('migrated modes use lexer profiles') do
     Mrbmacs::LuaMode => Mrbmacs::LUA_LEXER_PROFILE,
     Mrbmacs::MakeMode => Mrbmacs::MAKE_LEXER_PROFILE,
     Mrbmacs::MarkdownMode => Mrbmacs::MARKDOWN_LEXER_PROFILE,
+    Mrbmacs::ObjectivecMode => Mrbmacs::OBJECTIVEC_LEXER_PROFILE,
     Mrbmacs::PerlMode => Mrbmacs::PERL_LEXER_PROFILE,
     Mrbmacs::PovMode => Mrbmacs::POV_LEXER_PROFILE,
     Mrbmacs::RMode => Mrbmacs::R_LEXER_PROFILE,
     Mrbmacs::RustMode => Mrbmacs::RUST_LEXER_PROFILE,
     Mrbmacs::LatexMode => Mrbmacs::TEX_LEXER_PROFILE,
+    Mrbmacs::TypescriptMode => Mrbmacs::TYPESCRIPT_LEXER_PROFILE,
     Mrbmacs::XmlMode => Mrbmacs::XML_LEXER_PROFILE,
     Mrbmacs::YamlMode => Mrbmacs::YAML_LEXER_PROFILE
   }
@@ -114,11 +116,13 @@ assert('migrated lexer profiles own Lexilla configuration') do
     Mrbmacs::LUA_LEXER_PROFILE,
     Mrbmacs::MAKE_LEXER_PROFILE,
     Mrbmacs::MARKDOWN_LEXER_PROFILE,
+    Mrbmacs::OBJECTIVEC_LEXER_PROFILE,
     Mrbmacs::PERL_LEXER_PROFILE,
     Mrbmacs::POV_LEXER_PROFILE,
     Mrbmacs::R_LEXER_PROFILE,
     Mrbmacs::RUST_LEXER_PROFILE,
     Mrbmacs::TEX_LEXER_PROFILE,
+    Mrbmacs::TYPESCRIPT_LEXER_PROFILE,
     Mrbmacs::XML_LEXER_PROFILE,
     Mrbmacs::YAML_LEXER_PROFILE
   ]
@@ -168,6 +172,14 @@ assert('reviewed lexer mappings preserve semantic improvements') do
     },
     Mrbmacs::JAVASCRIPT_LEXER_PROFILE => {
       Scintilla::SCE_C_WORD2 => :builtin,
+      Scintilla::SCE_C_REGEX => :regexp
+    },
+    Mrbmacs::OBJECTIVEC_LEXER_PROFILE => {
+      Scintilla::SCE_C_WORD2 => :type,
+      Scintilla::SCE_C_PREPROCESSOR => :preprocessor
+    },
+    Mrbmacs::TYPESCRIPT_LEXER_PROFILE => {
+      Scintilla::SCE_C_WORD2 => :type,
       Scintilla::SCE_C_REGEX => :regexp
     },
     Mrbmacs::HASKELL_LEXER_PROFILE => {
@@ -252,6 +264,9 @@ assert('migrated profiles preserve lexer properties') do
   assert_equal '1', Mrbmacs::JAVA_LEXER_PROFILE.properties['lexer.cpp.triplequoted.strings']
   assert_equal '1', Mrbmacs::JAVASCRIPT_LEXER_PROFILE.properties['lexer.cpp.allow.dollars']
   assert_equal '2', Mrbmacs::JAVASCRIPT_LEXER_PROFILE.properties['lexer.cpp.backquoted.strings']
+  assert_equal '0', Mrbmacs::OBJECTIVEC_LEXER_PROFILE.properties['lexer.cpp.track.preprocessor']
+  assert_equal '1', Mrbmacs::TYPESCRIPT_LEXER_PROFILE.properties['lexer.cpp.allow.dollars']
+  assert_equal '2', Mrbmacs::TYPESCRIPT_LEXER_PROFILE.properties['lexer.cpp.backquoted.strings']
   assert_equal '1', Mrbmacs::HTML_LEXER_PROFILE.properties['fold.html']
   assert_equal '1', Mrbmacs::XML_LEXER_PROFILE.properties['html.tags.case.sensitive']
   assert_equal '0', Mrbmacs::XML_LEXER_PROFILE.properties['lexer.xml.allow.scripts']
@@ -265,6 +280,10 @@ assert('profile identity follows the mrbmacs language mode') do
   assert_equal 'cpp', Mrbmacs::JAVA_LEXER_PROFILE.lexer
   assert_equal :javascript, Mrbmacs::JAVASCRIPT_LEXER_PROFILE.name
   assert_equal 'cpp', Mrbmacs::JAVASCRIPT_LEXER_PROFILE.lexer
+  assert_equal :objectivec, Mrbmacs::OBJECTIVEC_LEXER_PROFILE.name
+  assert_equal 'cpp', Mrbmacs::OBJECTIVEC_LEXER_PROFILE.lexer
+  assert_equal :typescript, Mrbmacs::TYPESCRIPT_LEXER_PROFILE.name
+  assert_equal 'cpp', Mrbmacs::TYPESCRIPT_LEXER_PROFILE.lexer
   assert_equal :html, Mrbmacs::HTML_LEXER_PROFILE.name
   assert_equal 'hypertext', Mrbmacs::HTML_LEXER_PROFILE.lexer
   assert_equal :xml, Mrbmacs::XML_LEXER_PROFILE.name
@@ -283,6 +302,9 @@ assert('profile keyword set 0 remains the completion fallback') do
   assert_true Mrbmacs::GoMode.new.completion_keyword_list.include?('func')
   assert_true Mrbmacs::JavaMode.new.completion_keyword_list.include?('interface')
   assert_true Mrbmacs::JavascriptMode.new.completion_keyword_list.include?('function')
+  assert_true Mrbmacs::ObjectivecMode.new.completion_keyword_list.include?('@interface')
+  assert_true Mrbmacs::TypescriptMode.new.completion_keyword_list.include?('interface')
+  assert_false Mrbmacs::TypescriptMode.new.completion_keyword_list.include?('constexpr')
   assert_false Mrbmacs::JavaMode.new.completion_keyword_list.include?('constexpr')
   assert_false Mrbmacs::JavascriptMode.new.completion_keyword_list.include?('constexpr')
   assert_equal '', Mrbmacs::HtmlMode.new.completion_keyword_list

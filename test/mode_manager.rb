@@ -4,6 +4,8 @@ assert('get_mode_by_suffix') do
   assert_equal('cpp', Mrbmacs::ModeManager.get_mode_by_suffix('.h'))
   assert_equal('cpp', Mrbmacs::ModeManager.get_mode_by_suffix('.cpp'))
   assert_equal('cpp', Mrbmacs::ModeManager.get_mode_by_suffix('.cxx'))
+  assert_equal('objectivec', Mrbmacs::ModeManager.get_mode_by_suffix('.m'))
+  assert_equal('objectivec', Mrbmacs::ModeManager.get_mode_by_suffix('.mm'))
   assert_equal('css', Mrbmacs::ModeManager.get_mode_by_suffix('.css'))
   assert_equal('diff', Mrbmacs::ModeManager.get_mode_by_suffix('.diff'))
   assert_equal('fundamental', Mrbmacs::ModeManager.get_mode_by_suffix('.txt'))
@@ -15,6 +17,7 @@ assert('get_mode_by_suffix') do
   assert_equal('html', Mrbmacs::ModeManager.get_mode_by_suffix('.htm'))
   assert_equal('java', Mrbmacs::ModeManager.get_mode_by_suffix('.java'))
   assert_equal('javascript', Mrbmacs::ModeManager.get_mode_by_suffix('.js'))
+  assert_equal('typescript', Mrbmacs::ModeManager.get_mode_by_suffix('.ts'))
   assert_equal('json', Mrbmacs::ModeManager.get_mode_by_suffix('.json'))
   assert_equal('markdown', Mrbmacs::ModeManager.get_mode_by_suffix('.md'))
   assert_equal('perl', Mrbmacs::ModeManager.get_mode_by_suffix('.pl'))
@@ -31,6 +34,9 @@ end
 assert('get_mode_by_filename') do
   assert_equal('bash', Mrbmacs::ModeManager.get_mode_by_filename('test.sh'))
   assert_equal('cpp', Mrbmacs::ModeManager.get_mode_by_filename('/foo/bar/baz.c'))
+  assert_equal('objectivec', Mrbmacs::ModeManager.get_mode_by_filename('/foo/bar/AppDelegate.m'))
+  assert_equal('objectivec', Mrbmacs::ModeManager.get_mode_by_filename('/foo/bar/Editor.mm'))
+  assert_equal('typescript', Mrbmacs::ModeManager.get_mode_by_filename('/foo/bar/app.ts'))
   assert_equal('make', Mrbmacs::ModeManager.get_mode_by_filename('Makefile'))
   assert_equal('ruby', Mrbmacs::ModeManager.get_mode_by_filename('Rakefile'))
   assert_equal('latex', Mrbmacs::ModeManager.get_mode_by_filename('test.tex'))
@@ -48,6 +54,8 @@ assert('style preview filenames select their intended modes') do
     'html.html' => 'html',
     'java.java' => 'java',
     'javascript.js' => 'javascript',
+    'objectivec.m' => 'objectivec',
+    'typescript.ts' => 'typescript',
     'json.json' => 'json',
     'lisp.lisp' => 'lisp',
     'lua.lua' => 'lua',

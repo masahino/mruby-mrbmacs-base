@@ -159,8 +159,8 @@ LexerProfile
 ```
 
 This distinction is important because an mrbmacs mode name and a Lexilla lexer
-name are not always the same. For example, Go mode currently uses the `cpp`
-lexer. Compilation and grep use a `nil` lexer name: their Modes respond to
+name are not always the same. For example, Go, Objective-C, and TypeScript
+modes use the `cpp` lexer. Compilation and grep use a `nil` lexer name: their Modes respond to
 `SCN_STYLENEEDED` and assign the profile's style numbers themselves.
 
 Completion remains a Mode responsibility. A Mode may use profile keyword set 0
@@ -281,13 +281,13 @@ modes.
 ### Stage 3: reviewed mappings
 
 Status: implemented for Ruby, Python, Bash, C/C++, CSS, Diff, Go, Haskell,
-Java, JavaScript, HTML, XML, JSON, Lisp, Lua, Makefile, Markdown, Perl, POV-Ray,
-R, Rust, LaTeX, and YAML.
+Java, JavaScript, Objective-C, TypeScript, HTML, XML, JSON, Lisp, Lua, Makefile,
+Markdown, Perl, POV-Ray, R, Rust, LaTeX, and YAML.
 
-Java and JavaScript use independent profiles over Lexilla's `cpp` lexer.
-`CLikeMode` shares only brace-based editing behaviour among C++, Go, Java, and
-JavaScript; keywords, properties, and style refinements remain in each
-`LexerProfile`.
+Java, JavaScript, Objective-C, and TypeScript use independent profiles over
+Lexilla's `cpp` lexer. `CLikeMode` shares only brace-based editing behaviour
+among C++, Go, Java, JavaScript, Objective-C, and TypeScript; keywords,
+properties, and style refinements remain in each `LexerProfile`.
 
 - Apply the reviewed Ruby mapping.
 - Add C/C++, Python, Markdown, and Diff profiles.
