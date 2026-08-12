@@ -21,9 +21,9 @@ module Mrbmacs
     attr_accessor :sci, :mode_win, :frame, :buffer, :x1, :y1, :x2, :y2, :width, :height
 
     MARGIN_LINE_NUMBER = 0
-    MARGIN_FOLDING = 1
-    MARGIN_VC = 2
-    MARGIN_CHANGE_HISTORY = 3
+    MARGIN_VC = 1
+    MARGIN_CHANGE_HISTORY = 2
+    MARGIN_FOLDING = 3
 
     def initialize(frame, buffer, left, top, width, height)
       @frame = frame
@@ -78,7 +78,7 @@ module Mrbmacs
       #      @sci.sci_set_margin_widthn(1, 1)
       #      @sci.sci_set_margin_typen(1, 0)
       @sci.sci_set_margin_maskn(MARGIN_FOLDING, Scintilla::SC_MASK_FOLDERS)
-      @sci.sci_set_margin_typen(MARGIN_VC, Scintilla::SC_MARGIN_SYMBOL)
+      @sci.sci_set_margin_typen(MARGIN_VC, Scintilla::SC_MARGIN_COLOUR)
       @sci.sci_set_margin_widthn(
         MARGIN_VC,
         @sci.sci_text_width(Scintilla::STYLE_LINENUMBER, '_')
@@ -87,7 +87,7 @@ module Mrbmacs
                        (1 << MARKERN_VC_MODIFIED) |
                        (1 << MARKERN_VC_DELETED)
       @sci.sci_set_margin_maskn(MARGIN_VC, vc_marker_mask)
-      @sci.sci_set_margin_typen(MARGIN_CHANGE_HISTORY, Scintilla::SC_MARGIN_SYMBOL)
+      @sci.sci_set_margin_typen(MARGIN_CHANGE_HISTORY, Scintilla::SC_MARGIN_COLOUR)
       @sci.sci_set_margin_widthn(
         MARGIN_CHANGE_HISTORY,
         @sci.sci_text_width(Scintilla::STYLE_LINENUMBER, '_')
@@ -177,6 +177,12 @@ module Mrbmacs
       if theme.font_color[:color_linenumber]
         @sci.sci_style_set_fore(Scintilla::STYLE_LINENUMBER, theme.font_color[:color_linenumber][0])
         @sci.sci_style_set_back(Scintilla::STYLE_LINENUMBER, theme.font_color[:color_linenumber][1])
+      end
+      if theme.font_color[:color_margin_vc]
+        @sci.sci_set_margin_backn(MARGIN_VC, theme.font_color[:color_margin_vc][1])
+      end
+      if theme.font_color[:color_margin_change_history]
+        @sci.sci_set_margin_backn(MARGIN_CHANGE_HISTORY, theme.font_color[:color_margin_change_history][1])
       end
       apply_theme_marker(theme)
       if theme.font_color[:color_caret_line]
