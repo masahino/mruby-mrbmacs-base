@@ -131,7 +131,7 @@ module Mrbmacs
     def apply_theme_marker(theme)
       if theme.font_color[:color_marker_breakpoint]
         @sci.sci_marker_set_fore(Mrbmacs::MARKERN_BREAKPOINT, theme.font_color[:color_marker_breakpoint][0])
-        @sci.sci_marker_set_back(Mrbmacs::MARKERN_BREAKPOINT, theme.font_color[:color_marker_breakpoint][1])
+#        @sci.sci_marker_set_back(Mrbmacs::MARKERN_BREAKPOINT, theme.font_color[:color_marker_breakpoint][1])
       end
       if theme.font_color[:color_marker_current]
         @sci.sci_marker_set_fore(Mrbmacs::MARKERN_CURRENT, theme.font_color[:color_marker_current][0])
