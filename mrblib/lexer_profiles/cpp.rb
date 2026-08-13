@@ -44,6 +44,7 @@ module Mrbmacs
       5 => C_LIKE_TASK_MARKERS
     },
     {
+      'fold' => '1',
       'lexer.cpp.track.preprocessor' => '0',
       'lexer.cpp.escape.sequence' => '1'
     }
