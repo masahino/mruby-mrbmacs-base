@@ -253,13 +253,14 @@ end
 assert('migrated profiles preserve lexer properties') do
   assert_equal({ 'fold.compact' => '1' }, Mrbmacs::BASH_LEXER_PROFILE.properties)
   assert_equal({
-    'lexer.cpp.track.preprocessor' => '0',
-    'lexer.cpp.escape.sequence' => '1'
-  }, Mrbmacs::CPP_LEXER_PROFILE.properties)
+      'fold' => '1',
+      'lexer.cpp.track.preprocessor' => '0',
+      'lexer.cpp.escape.sequence' => '1'
+    }, Mrbmacs::CPP_LEXER_PROFILE.properties)
   assert_equal({
-    'lexer.cpp.backquoted.strings' => '1',
-    'lexer.cpp.escape.sequence' => '1'
-  }, Mrbmacs::GO_LEXER_PROFILE.properties)
+      'lexer.cpp.backquoted.strings' => '1',
+      'lexer.cpp.escape.sequence' => '1'
+    }, Mrbmacs::GO_LEXER_PROFILE.properties)
   assert_equal '0', Mrbmacs::JAVA_LEXER_PROFILE.properties['lexer.cpp.enable.preprocessor']
   assert_equal '1', Mrbmacs::JAVA_LEXER_PROFILE.properties['lexer.cpp.triplequoted.strings']
   assert_equal '1', Mrbmacs::JAVASCRIPT_LEXER_PROFILE.properties['lexer.cpp.allow.dollars']

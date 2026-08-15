@@ -84,18 +84,32 @@ module Mrbmacs
         @logger.info "can't delete special buffer"
         return
       end
-      if @frame.view_win.sci_get_modify != 0
-        ret = @frame.y_or_n("Buffer #{buffername} modified; kill anyway? (y or n) ")
-        return if ret == false
-      end
-      # delete buffer
       target_buffer = Mrbmacs.get_buffer_from_name(@buffer_list, buffername)
       if target_buffer.nil?
         message 'no match'
         return
       end
+      target_wins = @frame.edit_win_list.select { |w| w.buffer == target_buffer }
+
+      if !target_wins.empty? && target_wins.first.sci.sci_get_modify != 0
+        ret = @frame.y_or_n("Buffer #{buffername} modified; kill anyway? (y or n) ")
+        return if ret == false
+      end
+
+      new_buffer = (@buffer_list - [target_buffer]).last
+
+      target_wins.each do |win|
+        win.sci.sci_set_docpointer(new_buffer.docpointer)
+        win.buffer = new_buffer
+        apply_theme_to_mode(new_buffer.mode, win, @theme)
+        win.sci.sci_goto_pos(new_buffer.pos)
+      end
+
       @buffer_list.delete(target_buffer)
-      switch_to_buffer(@buffer_list.last.name)
+
+      @current_buffer = @frame.edit_win.buffer
+      @frame.sync_tab(@current_buffer.name)
+      @frame.modeline(self)
     end
   end
 

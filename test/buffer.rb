@@ -88,6 +88,65 @@ assert('kill-buffer (current_buffer)') do
   assert_equal('bar.rb', app.buffer_list.last.name)
 end
 
+assert('kill-buffer displayed in multiple windows') do
+  app = setup_buffers
+  app.switch_to_buffer('bar.rb')
+  target_buffer = app.current_buffer
+  app.split_window_vertically
+
+  assert_equal(2, app.frame.edit_win_list.size)
+  assert_equal(target_buffer, app.frame.edit_win_list[0].buffer)
+  assert_equal(target_buffer, app.frame.edit_win_list[1].buffer)
+
+  app.kill_buffer(target_buffer.name)
+
+  assert_nil(Mrbmacs.get_buffer_from_name(app.buffer_list, target_buffer.name))
+  remaining_windows = app.frame.edit_win_list.select { |win| win.buffer == target_buffer }
+  assert_equal(0, remaining_windows.size)
+end
+
+assert('kill-buffer displayed in a non-current window') do
+  app = setup_buffers
+  app.switch_to_buffer('bar.rb')
+  target_buffer = app.current_buffer
+  app.split_window_vertically
+  target_window = app.frame.edit_win
+  app.other_window
+  app.switch_to_buffer('baz.rb')
+  current_window = app.frame.edit_win
+  current_buffer = app.current_buffer
+
+  app.kill_buffer(target_buffer.name)
+
+  assert_nil(Mrbmacs.get_buffer_from_name(app.buffer_list, target_buffer.name))
+  assert_equal(current_window, app.frame.edit_win)
+  assert_equal(current_buffer, app.current_buffer)
+  assert_equal(current_buffer, current_window.buffer)
+  assert_equal(current_buffer, target_window.buffer)
+end
+
+assert('cancel killing a modified buffer displayed in a non-current window') do
+  app = setup_buffers
+  app.switch_to_buffer('bar.rb')
+  target_buffer = app.current_buffer
+  app.split_window_vertically
+  target_window = app.frame.edit_win
+  app.other_window
+  app.switch_to_buffer('baz.rb')
+  current_window = app.frame.edit_win
+  current_buffer = app.current_buffer
+  target_window.sci.test_return[Scintilla::SCI_GETMODIFY] = 1
+  app.frame.define_singleton_method(:y_or_n) { |_prompt| false }
+
+  app.kill_buffer(target_buffer.name)
+
+  assert_equal(target_buffer, Mrbmacs.get_buffer_from_name(app.buffer_list, target_buffer.name))
+  assert_equal(target_buffer, target_window.buffer)
+  assert_equal(current_window, app.frame.edit_win)
+  assert_equal(current_buffer, app.current_buffer)
+  assert_equal(current_buffer, current_window.buffer)
+end
+
 assert('kill-buffer (not current_buffer)') do
   app = setup_buffers
   bufs = app.buffer_list.size
