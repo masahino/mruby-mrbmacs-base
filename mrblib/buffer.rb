@@ -110,6 +110,7 @@ module Mrbmacs
       @current_buffer = @frame.edit_win.buffer
       @frame.sync_tab(@current_buffer.name)
       @frame.modeline(self)
+      after_kill_buffer(self, target_buffer)
     end
   end
 
