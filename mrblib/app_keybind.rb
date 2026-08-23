@@ -12,5 +12,13 @@ module Mrbmacs
     def modify_keymap(key, cmd)
       @keymap.keymap[key] = cmd
     end
+
+    def effective_keybindings
+      bindings = @keymap.keymap.dup
+      @current_buffer.mode.keymap.each do |key, command|
+        bindings[key] = command
+      end
+      bindings
+    end
   end
 end

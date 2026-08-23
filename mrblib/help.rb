@@ -1,0 +1,50 @@
+module Mrbmacs
+  # Help commands
+  module Command
+    def describe_bindings
+      text = format_key_bindings
+      setup_result_buffer('*Bindings*')
+      @frame.view_win.sci_set_read_only(0)
+      @frame.view_win.sci_set_text(text)
+      @frame.view_win.sci_set_save_point
+      @frame.view_win.sci_set_read_only(1)
+      @frame.view_win.sci_goto_pos(0)
+    end
+  end
+
+  # Application helpers for help commands
+  class Application
+    def scintilla_command_names
+      command_names = {}
+      names = Scintilla.constants.map(&:to_s).select do |name|
+        name.start_with?('SCI_')
+      end.sort
+      names.each do |name|
+        value = Scintilla.const_get(name)
+        command_names[value] ||= name if value.is_a?(Integer)
+      end
+      command_names
+    end
+
+    def key_binding_action_name(action, command_names = scintilla_command_names)
+      if action.is_a?(Integer)
+        command_names[action] || "Scintilla command #{action}"
+      else
+        action.to_s.tr('_', '-')
+      end
+    end
+
+    def format_key_bindings
+      bindings = effective_keybindings.reject do |_key, command|
+        command == 'prefix'
+      end
+      keys = bindings.keys.sort
+      key_width = keys.map(&:length).max || 0
+      command_names = scintilla_command_names
+      lines = keys.map do |key|
+        "#{key.ljust(key_width)}  #{key_binding_action_name(bindings[key], command_names)}"
+      end
+      (["Key bindings for #{@current_buffer.mode.name} mode", ''] + lines).join("\n") + "\n"
+    end
+  end
+end
