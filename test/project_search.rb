@@ -1,14 +1,36 @@
 assert('search_project_core returns structured literal matches and skips excluded directories') do
-  root = "#{File.dirname(__FILE__)}/fixtures/project_search"
-  stats = {}
+  tmp_directory = ENV['TMPDIR'] || '/tmp'
+  root = File.join(tmp_directory, "mrbmacs-project-search-test-#{$$}-#{Time.now.to_i}")
+  lib_directory = File.join(root, 'lib')
+  build_directory = File.join(root, 'build')
+  main_file = File.join(root, 'main.txt')
+  helper_file = File.join(lib_directory, 'helper.txt')
+  generated_file = File.join(build_directory, 'generated.txt')
 
-  results = Mrbmacs.search_project_core('target_word', root, stats)
+  begin
+    Dir.mkdir(root)
+    Dir.mkdir(lib_directory)
+    Dir.mkdir(build_directory)
+    File.open(main_file, 'w') { |file| file.write("definition\ntarget_word appears twice: target_word\n") }
+    File.open(helper_file, 'w') { |file| file.write("helper\ntarget_word\n") }
+    File.open(generated_file, 'w') { |file| file.write("target_word in an excluded directory\n") }
+    stats = {}
 
-  assert_equal 2, results.length
-  assert_equal 2, stats['files']
-  assert_equal ['file', 'line', 'text'], results[0].keys.sort
-  assert_true results.all? { |result| !result['file'].include?('/build/') }
-  assert_equal [2, 2], results.map { |result| result['line'] }.sort
+    results = Mrbmacs.search_project_core('target_word', root, stats)
+
+    assert_equal 2, results.length
+    assert_equal 2, stats['files']
+    assert_equal ['file', 'line', 'text'], results[0].keys.sort
+    assert_true results.all? { |result| !result['file'].include?('/build/') }
+    assert_equal [2, 2], results.map { |result| result['line'] }.sort
+  ensure
+    [main_file, helper_file, generated_file].each do |file|
+      File.delete(file) if File.exist?(file)
+    end
+    [lib_directory, build_directory, root].each do |directory|
+      Dir.rmdir(directory) if Dir.exist?(directory)
+    end
+  end
 end
 
 assert('search_project uses only the Scintilla word as the initial query') do
@@ -16,7 +38,7 @@ assert('search_project uses only the Scintilla word as the initial query') do
   view = app.frame.view_win
   received_default = nil
   displayed = nil
-  app.project.update("#{File.dirname(__FILE__)}/fixtures/project_search")
+  app.project.update(Dir.pwd)
   view.define_singleton_method(:sci_get_current_pos) { 8 }
   view.define_singleton_method(:sci_word_start_position) do |position, only_word_characters|
     assert_equal 8, position
@@ -59,7 +81,7 @@ end
 
 assert('display_project_search_results writes summary and relative result paths') do
   app = Mrbmacs::TestSupport::Application.new
-  root = File.expand_path("#{File.dirname(__FILE__)}/fixtures/project_search")
+  root = File.expand_path('/work/project')
   app.project.update(root)
   app.current_buffer.mode = Mrbmacs::ProjectsearchMode.new
   app.define_singleton_method(:setup_result_buffer) { |_buffer_name| nil }
