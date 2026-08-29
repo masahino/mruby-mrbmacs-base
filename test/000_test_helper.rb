@@ -59,6 +59,8 @@ module Mrbmacs
       def echo_gets(prompt, text = '', &block)
         if $test_echo_gets[:call_block] == true
           list, len = block.call($test_echo_gets[:input_text])
+          $test_echo_gets[:completion_list] = list
+          $test_echo_gets[:completion_length] = len
           $test_echo_gets[:output_text]
         else
           $test_echo_gets[:output_text]

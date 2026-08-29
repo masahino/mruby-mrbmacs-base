@@ -83,8 +83,13 @@ module Mrbmacs
       end
     end
 
-    def exec_shell_command_open3(command)
-      _o, e, s = Open3.capture3(command)
+    def exec_shell_command_open3(command, directory = nil)
+      result = if directory.nil?
+                 Open3.capture3(command)
+               else
+                 Dir.chdir(directory) { Open3.capture3(command) }
+               end
+      _o, e, s = result
       @frame.view_win.sci_set_text(e)
       @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_length)
       @frame.view_win.sci_insert_text(@frame.view_win.sci_get_length, "\n")
@@ -96,8 +101,12 @@ module Mrbmacs
       end
     end
 
-    def exec_shell_command_popen(buffer_name, command)
-      io = IO.popen("#{command} 2>&1")
+    def exec_shell_command_popen(buffer_name, command, directory = nil)
+      io = if directory.nil?
+             IO.popen("#{command} 2>&1")
+           else
+             Dir.chdir(directory) { IO.popen("#{command} 2>&1") }
+           end
       add_io_read_event(io) do |app, io_arg|
         ret = io_arg.read(256) unless io_arg.closed?
         result_win = app.frame.edit_win_from_buffer(buffer_name)
@@ -114,14 +123,14 @@ module Mrbmacs
       end
     end
 
-    def exec_shell_command(buffer_name, command)
+    def exec_shell_command(buffer_name, command, directory = nil)
       setup_result_buffer(buffer_name)
       @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
       @frame.view_win.sci_clear_all
       if Object.const_defined? 'Open3'
-        exec_shell_command_open3(command)
+        exec_shell_command_open3(command, directory)
       else
-        exec_shell_command_popen(buffer_name, command)
+        exec_shell_command_popen(buffer_name, command, directory)
       end
     end
   end

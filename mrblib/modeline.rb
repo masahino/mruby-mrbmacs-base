@@ -4,7 +4,7 @@ module Mrbmacs
     attr_accessor :format
 
     def initialize
-      @format = '(%<encoding>s-%<eol>s):%<modified>s %<buffername>s %<pos>s    (%<vcinfo>s)    [%<modename>s]    [%<additional_info>s]'
+      @format = '(%<encoding>s-%<eol>s):%<modified>s %<buffername>s %<pos>s    (%<vcinfo>s)    [%<project>s]    [%<modename>s]    [%<additional_info>s]'
     end
   end
 
@@ -19,6 +19,7 @@ module Mrbmacs
         buffername: modeline_buffername,
         pos: modeline_pos,
         vcinfo: modeline_vcinfo,
+        project: modeline_project,
         modename: modeline_modename,
         additional_info: modeline_additional_info
       )
@@ -57,6 +58,12 @@ module Mrbmacs
 
     def modeline_modename
       @current_buffer.mode.name
+    end
+
+    def modeline_project
+      return '' if @project.nil?
+
+      "project:#{@project.name}"
     end
 
     def modeline_additional_info

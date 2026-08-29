@@ -41,6 +41,22 @@ assert('modeline_additional_info') do
   assert_equal '', app.modeline_additional_info
 end
 
+assert('modeline_project') do
+  app = Mrbmacs::TestSupport::Application.new
+  expected = "project:#{File.basename(app.project.root_directory)}"
+
+  assert_equal expected, app.modeline_project
+  assert_true app.modeline_str.include?("[#{expected}]")
+end
+
+assert('modeline_project handles an unset project') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.instance_variable_set(:@project, nil)
+
+  assert_equal '', app.modeline_project
+  assert_true app.modeline_str.include?('[]')
+end
+
 assert('modeline_vcinfo') do
   app = Mrbmacs::TestSupport::Application.new
   assert_equal true, app.modeline_vcinfo.is_a?(String)

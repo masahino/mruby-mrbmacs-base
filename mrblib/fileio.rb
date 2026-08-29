@@ -104,13 +104,17 @@ module Mrbmacs
         dir_list = []
         len = 0
         if input_text[-1] == '/'
-          dir_list = Dir.entries(input_text).select { |f| File.directory?(f) }
+          dir_list = Dir.entries(input_text).select do |item|
+            File.directory?(File.join(input_text, item))
+          end
         else
           dir = File.dirname(input_text)
           fname = File.basename(input_text)
           qfname = Regexp.quote(fname)
           Dir.foreach(dir) do |item|
-            dir_list.push(item) if File.directory?(item) && item =~ /^#{qfname}/
+            if File.directory?(File.join(dir, item)) && item =~ /^#{qfname}/
+              dir_list.push(item)
+            end
           end
           len = fname.length
         end
@@ -127,6 +131,7 @@ module Mrbmacs
         file_list = []
         len = 0
         if input_text[-1] == '/'
+          dir = input_text
           file_list = Dir.entries(input_text)
         else
           dir = File.dirname(input_text)
@@ -137,7 +142,7 @@ module Mrbmacs
           len = fname.length
         end
         file_list.map! do |file_name|
-          if File.directory?(file_name)
+          if File.directory?(File.join(dir, file_name))
             "#{file_name}/"
           else
             file_name

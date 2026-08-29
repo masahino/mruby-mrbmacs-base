@@ -3,6 +3,7 @@ module Mrbmacs
   class Application
     attr_accessor :frame, :current_buffer, :buffer_list, :theme,
                   :sci_handler, :ext, :config, :io_handler
+    attr_reader :project
 
     def initialize(argv = [])
       opts, argv = parse_args(argv)

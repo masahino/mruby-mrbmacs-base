@@ -10,14 +10,22 @@ module Mrbmacs
       return if command.nil?
 
       @project.last_build_command = command
-      exec_shell_command('*compilation*', @project.last_build_command)
+      exec_shell_command(
+        '*compilation*',
+        @project.last_build_command,
+        @project.root_directory
+      )
     end
 
     def recompile
       if @project.last_build_command.nil?
         compile
       else
-        exec_shell_command('*compilation*', @project.last_build_command)
+        exec_shell_command(
+          '*compilation*',
+          @project.last_build_command,
+          @project.root_directory
+        )
       end
     end
   end

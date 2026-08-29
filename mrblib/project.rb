@@ -1,12 +1,11 @@
 module Mrbmacs
   # Project
   class Project
-    attr_accessor :root_directory, :build_command, :last_build_command
+    attr_reader :name, :root_directory
+    attr_accessor :build_command, :last_build_command
 
     def initialize(root_directory)
-      @root_directory = root_directory
-      @build_command = guess_build_command
-      @last_build_command = nil
+      update(root_directory)
     end
 
     def guess_build_command
@@ -23,8 +22,8 @@ module Mrbmacs
     end
 
     def update(root_directory)
-      @root_directory = root_directory
-      Dir.chdir(@root_directory)
+      @root_directory = File.expand_path(root_directory)
+      @name = File.basename(@root_directory)
       @build_command = guess_build_command
       @last_build_command = nil
     end
@@ -38,6 +37,7 @@ module Mrbmacs
       end
       if root_directory != nil && Dir.exist?(root_directory)
         @project.update(root_directory)
+        @frame.modeline(self)
       end
     end
   end

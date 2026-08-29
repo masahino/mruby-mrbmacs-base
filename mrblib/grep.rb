@@ -10,7 +10,7 @@ module Mrbmacs
       setup_result_buffer(buffer_name)
       result_buffer = Mrbmacs.get_buffer_from_name(@buffer_list, buffer_name)
       result_buffer.mode.pattern = GrepMode.extract_pattern(command)
-      exec_shell_command(buffer_name, command)
+      exec_shell_command(buffer_name, command, default_dir)
     end
   end
 end
