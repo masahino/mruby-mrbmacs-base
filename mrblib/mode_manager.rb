@@ -46,7 +46,8 @@ module Mrbmacs
       '*compilation*' => 'compilation',
       '*Messages*' => 'fundamental',
       '*preview_theme*' => 'previewtheme',
-      '*grep*' => 'grep'
+      '*grep*' => 'grep',
+      '*Project Search*' => 'projectsearch'
     }
 
     def self.add_mode(suffix_or_filename, mode_name)
