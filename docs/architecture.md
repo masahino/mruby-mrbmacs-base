@@ -134,11 +134,14 @@ helper under `tools/`).
 - **`Frame`** — empty `class Frame < FrameBase`. Not a logic tier.
 - **`class Application` reopens** are spread across ~15 files. There is no
   single place that lists the full method surface.
-- **GTK** minibuffer input now works (echo-area, mirroring Cocoa); `find.rb`
-  and `replace.rb` still disagree on whether to reopen `Application` or
-  `ApplicationGtk`, and gtk `replace.rb` still expects a tri-state `y_or_n`
-  (`true` / `false` / `nil`) while the echo-area `y_or_n` returns only a
-  boolean (C-g == "no").
+- **GTK** minibuffer input now works (echo-area, mirroring Cocoa), including
+  file/directory prompts: `read_file_name` / `read_dir_name` /
+  `read_save_file_name` and `find_file` are no longer overridden — GTK uses
+  the base `echo_gets` versions like every other frontend (the GtkFileChooser
+  path is gone). Still open: `find.rb` and `replace.rb` disagree on whether
+  to reopen `Application` or `ApplicationGtk`, and gtk `replace.rb` expects a
+  tri-state `y_or_n` (`true` / `false` / `nil`) while the echo-area `y_or_n`
+  returns only a boolean (C-g == "no").
 
 ## Known duplication (candidates for consolidation)
 
