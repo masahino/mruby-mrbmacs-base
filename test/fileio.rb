@@ -19,6 +19,19 @@ assert('insert-file new buffer') do
   assert_equal(Scintilla::SCI_GOTOPOS, app.frame.view_win.messages.pop)
 end
 
+assert('find-file rejects directories before creating a buffer') do
+  app = Mrbmacs::TestSupport::Application.new
+  directory = File.dirname(__FILE__)
+  current_buffer = app.current_buffer
+  buffer_count = app.buffer_list.length
+
+  app.find_file(directory)
+
+  assert_equal current_buffer, app.current_buffer
+  assert_equal buffer_count, app.buffer_list.length
+  assert_equal 'Cannot open a directory', app.frame.echo_message
+end
+
 assert('write-file') do
   app = Mrbmacs::TestSupport::Application.new
   test_file = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.output"

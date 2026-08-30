@@ -33,6 +33,7 @@ module Mrbmacs
     def find_file(filename = nil)
       filename = read_file_name('find file: ', @current_buffer.directory) if filename.nil?
       return if filename.nil?
+      return if reject_directory_for_find_file(filename)
 
       if Mrbmacs.get_buffer_from_path(@buffer_list, filename).nil?
         @current_buffer.pos = @frame.view_win.sci_get_current_pos
@@ -97,6 +98,13 @@ module Mrbmacs
 
   # Application
   class Application
+    def reject_directory_for_find_file(filename)
+      return false unless File.directory?(filename)
+
+      message 'Cannot open a directory'
+      true
+    end
+
     def read_dir_name(prompt, default_directory = nil)
       prefix_text = default_directory
       prefix_text += '/' if prefix_text[-1] != '/'
