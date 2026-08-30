@@ -88,6 +88,13 @@ module Mrbmacs
         filename = read_save_file_name('write file: ', @current_buffer.directory, @current_buffer.basename)
       end
       return if filename.nil?
+      return if reject_directory_for_find_file(filename)
+
+      current = @current_buffer.filename.to_s
+      if File.exist?(filename) &&
+         (current.empty? || File.expand_path(filename) != File.expand_path(current))
+        return unless @frame.y_or_n("File `#{filename}' exists; overwrite? (y or n) ")
+      end
 
       @current_buffer.update_filename(filename)
       save_buffer
@@ -105,61 +112,74 @@ module Mrbmacs
       true
     end
 
-    def read_dir_name(prompt, default_directory = nil)
-      prefix_text = default_directory
-      prefix_text += '/' if prefix_text[-1] != '/'
-      dirname = @frame.echo_gets(prompt, prefix_text) do |input_text|
-        dir_list = []
-        len = 0
-        if input_text[-1] == '/'
-          dir_list = Dir.entries(input_text).select do |item|
-            File.directory?(File.join(input_text, item))
-          end
-        else
-          dir = File.dirname(input_text)
-          fname = File.basename(input_text)
-          qfname = Regexp.quote(fname)
-          Dir.foreach(dir) do |item|
-            if File.directory?(File.join(dir, item)) && item =~ /^#{qfname}/
-              dir_list.push(item)
-            end
-          end
-          len = fname.length
+    # Expand a leading ~ / ~/ in a path the user typed into a file prompt.
+    # ~user is left alone.
+    def expand_input_path(path)
+      return path unless path.start_with?('~')
+      return Mrbmacs.homedir if path == '~'
+      return Mrbmacs.homedir + path[1..-1] if path.start_with?('~/')
+
+      path
+    end
+
+    # Completion candidates for an in-progress path typed into echo_gets.
+    # With a block, it is called with (absolute_entry, basename) to keep an
+    # entry. Returns [autocomplete_list, length_to_replace] for echo_gets.
+    #
+    #   "." and ".." are never offered; dotfiles are hidden until the user
+    #   starts typing one; matching is case-insensitive; an unreadable or
+    #   missing directory yields no candidates instead of raising out of the
+    #   frontend's modal input loop.
+    def path_completions(input_text)
+      path = expand_input_path(input_text)
+      if path.end_with?('/')
+        dir = path
+        stub = ''
+      else
+        dir = File.dirname(path)
+        stub = File.basename(path)
+      end
+
+      entries =
+        begin
+          Dir.entries(dir)
+        rescue StandardError
+          []
         end
-        [dir_list.sort.join(@frame.echo_win.sci_autoc_get_separator.chr), len]
+
+      matches = entries.select do |name|
+        next false if name == '.' || name == '..'
+        next false if name.start_with?('.') && !stub.start_with?('.')
+        next false unless stub.empty? || name.downcase.start_with?(stub.downcase)
+
+        block_given? ? yield(File.join(dir, name), name) : true
+      end
+
+      matches.map! do |name|
+        File.directory?(File.join(dir, name)) ? "#{name}/" : name
+      end
+      [matches.sort.join(@frame.echo_win.sci_autoc_get_separator.chr), stub.length]
+    end
+
+    def read_dir_name(prompt, default_directory = nil)
+      default_directory ||= @current_buffer.directory
+      prefix_text = default_directory.dup
+      prefix_text += '/' unless prefix_text.end_with?('/')
+      dirname = @frame.echo_gets(prompt, prefix_text) do |input_text|
+        path_completions(input_text) { |full, _name| File.directory?(full) }
       end
       @frame.modeline_refresh(self)
-      dirname
+      dirname.nil? ? nil : expand_input_path(dirname)
     end
 
     def read_file_name(prompt, directory, default_name = nil)
       prefix_text = "#{directory}/"
       prefix_text += default_name unless default_name.nil?
       filename = @frame.echo_gets(prompt, prefix_text) do |input_text|
-        file_list = []
-        len = 0
-        if input_text[-1] == '/'
-          dir = input_text
-          file_list = Dir.entries(input_text)
-        else
-          dir = File.dirname(input_text)
-          fname = File.basename(input_text)
-          Dir.foreach(dir) do |item|
-            file_list.push(item) if item.start_with?(fname)
-          end
-          len = fname.length
-        end
-        file_list.map! do |file_name|
-          if File.directory?(File.join(dir, file_name))
-            "#{file_name}/"
-          else
-            file_name
-          end
-        end
-        [file_list.sort.join(@frame.echo_win.sci_autoc_get_separator.chr), len]
+        path_completions(input_text)
       end
       @frame.modeline_refresh(self)
-      filename
+      filename.nil? ? nil : expand_input_path(filename)
     end
 
     def read_save_file_name(prompt, directory, default_name = nil)

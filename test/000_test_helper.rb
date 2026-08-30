@@ -71,6 +71,10 @@ module Mrbmacs
         @echo_message = text
       end
 
+      def y_or_n(_prompt)
+        true
+      end
+
       def modeline(app, win = @mode_win)
       end
 
