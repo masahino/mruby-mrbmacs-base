@@ -162,3 +162,5 @@ Recorded here so the analysis is not repeated. None of these are scheduled.
    (`frame_cocoa.rb` and `frame-gtk.rb` are now identical).
 5. **`set_keybind`** differs between `keymap.rb` and `application_cocoa.rb`
    only in the modifier mapping.
+6. **`Mrbmacs.dir_glob`** (`fileio.rb`) is now dead — superseded by
+   `Application#path_completions`, referenced only by its own tests.
