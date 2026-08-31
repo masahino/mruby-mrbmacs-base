@@ -109,8 +109,10 @@ module Mrbmacs
             view_win.sci_goto_pos(0)
           end
         end
+        search_highlight_begin(search_text)
         view_win.refresh
       end
+      search_highlight_end
       echo_win.sci_clear_all
       echo_win.refresh
     end

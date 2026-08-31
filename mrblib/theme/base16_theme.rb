@@ -54,6 +54,10 @@ module Mrbmacs
         color_regexp_grouping_backslash: [@@base05, @background_color, false, false],
         # additional
         color_brace_highlight: [@@base08, @@base04, false, false],
+        color_search_match: [
+          @background_color < 0x808080 ? 0x6f4f2f : 0x88caf7,
+          @background_color, false, false
+        ],
         color_annotation: [@@base05, @@base08, true, false],
         color_annotation_info: [@@base06, @@base03, true, false],
         color_annotation_warn: [@@base06, @@base0F, true, false],

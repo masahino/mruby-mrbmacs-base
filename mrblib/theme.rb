@@ -61,6 +61,7 @@ module Mrbmacs
         color_regexp_grouping_backslash: [0xffff00, @background_color, false, false],
         # additonal
         color_brace_highlight: [@background_color, @foreground_color, false, false],
+        color_search_match: [0x6f4f2f, @background_color, false, false],
         color_annotation: [@background_color, 0xff0000, true, false],
         color_annotation_info: [@background_color, 0x808080, true, false],
         color_annotation_warn: [@background_color, 0xffff00, true, false],

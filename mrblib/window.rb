@@ -203,6 +203,12 @@ module Mrbmacs
         Scintilla::SC_ELEMENT_SELECTION_INACTIVE_BACK,
         theme.foreground_color | 0xff000000
       )
+      @sci.sci_indic_set_style(SEARCH_INDICATOR, SEARCH_INDICATOR_STYLE)
+      if theme.font_color[:color_search_match]
+        @sci.sci_indic_set_fore(SEARCH_INDICATOR, theme.font_color[:color_search_match][0])
+      end
+      @sci.sci_indic_set_alpha(SEARCH_INDICATOR, 60)
+      @sci.sci_indic_set_outline_alpha(SEARCH_INDICATOR, 160)
     end
 
     def apply_theme(theme)

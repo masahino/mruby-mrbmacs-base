@@ -35,6 +35,7 @@ module Mrbmacs
         color_regexp_grouping_backslash: [@@yellow, @@base3, false, false],
         # additional
         color_brace_highlight: [@background_color, @foreground_color, false, false],
+        color_search_match: [@@base2, @background_color, false, false],
         color_annotation: [@@base03, @@red, true, false],
         color_annotation_info: [@@base03, @@base1, true, false],
         color_annotation_warn: [@@base03, @@yellow, true, false],

@@ -21,6 +21,7 @@ module Mrbmacs
       add_sci_event(Scintilla::SCN_UPDATEUI) do |_app, scn|
         brace_highlight(scn)
         display_selection_range(scn)
+        refresh_search_highlight if search_highlight_active?
       end
 
       add_sci_event(Scintilla::SCN_STYLENEEDED) do |app, scn|
