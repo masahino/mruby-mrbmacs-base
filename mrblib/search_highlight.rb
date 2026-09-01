@@ -18,8 +18,16 @@ module Mrbmacs
     end
 
     # Start (or update) highlighting of `text`. Passing nil / "" clears it.
-    def search_highlight_begin(text)
-      @search_highlight_text = text.nil? || text.empty? ? nil : text
+    # `mode` (:isearch / :replace) only labels the modeline match counter.
+    def search_highlight_begin(text, mode = :isearch)
+      new_text = text.nil? || text.empty? ? nil : text
+      @search_mode = mode
+      if new_text != @search_highlight_text
+        @search_highlight_text = new_text
+        # The total only changes when the search text does, so cache it and
+        # spare the full-document scan on every C-s / y / n.
+        @search_match_total = new_text ? search_match_total(new_text) : 0
+      end
       refresh_search_highlight
     end
 
@@ -27,9 +35,65 @@ module Mrbmacs
       return unless search_highlight_active?
 
       @search_highlight_text = nil
+      @search_match_total = 0
       view = @frame.view_win
       view.sci_set_indicator_current(SEARCH_INDICATOR)
       view.sci_indicator_clear_range(0, view.sci_get_length)
+    end
+
+    # Total occurrences of `text` in the whole document (no cap).
+    def search_match_total(text)
+      return 0 if text.nil? || text.empty?
+
+      view = @frame.view_win
+      saved_start = view.sci_get_target_start
+      saved_end = view.sci_get_target_end
+      length = view.sci_get_length
+      count = 0
+      pos = 0
+      while pos < length
+        view.sci_set_target_start(pos)
+        view.sci_set_target_end(length)
+        break if view.sci_search_in_target(text.bytesize, text) == -1
+
+        match_end = view.sci_get_target_end
+        break if match_end <= view.sci_get_target_start
+
+        count += 1
+        pos = match_end
+      end
+      view.sci_set_target_start(saved_start)
+      view.sci_set_target_end(saved_end)
+      count
+    end
+
+    # 1-based ordinal of the match at (or first after) `pos`; 0 if none.
+    def search_match_index(text, pos)
+      return 0 if text.nil? || text.empty?
+
+      view = @frame.view_win
+      saved_start = view.sci_get_target_start
+      saved_end = view.sci_get_target_end
+      length = view.sci_get_length
+      index = 0
+      scan = 0
+      while scan <= length
+        view.sci_set_target_start(scan)
+        view.sci_set_target_end(length)
+        break if view.sci_search_in_target(text.bytesize, text) == -1
+
+        match_start = view.sci_get_target_start
+        match_end = view.sci_get_target_end
+        break if match_end <= match_start
+
+        index += 1
+        break if match_start >= pos
+
+        scan = match_end
+      end
+      view.sci_set_target_start(saved_start)
+      view.sci_set_target_end(saved_end)
+      index
     end
 
     # Repaint indicators for matches inside the visible range. Safe to call

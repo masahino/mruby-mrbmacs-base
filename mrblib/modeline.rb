@@ -4,7 +4,7 @@ module Mrbmacs
     attr_accessor :format
 
     def initialize
-      @format = '(%<encoding>s-%<eol>s):%<modified>s %<buffername>s %<pos>s    (%<vcinfo>s)    [%<project>s]    [%<modename>s]    [%<additional_info>s]'
+      @format = '(%<encoding>s-%<eol>s):%<modified>s %<buffername>s %<pos>s    (%<vcinfo>s)    [%<project>s]    [%<modename>s]    [%<additional_info>s]%<search>s'
     end
   end
 
@@ -21,8 +21,20 @@ module Mrbmacs
         vcinfo: modeline_vcinfo,
         project: modeline_project,
         modename: modeline_modename,
-        additional_info: modeline_additional_info
+        additional_info: modeline_additional_info,
+        search: modeline_search
       )
+    end
+
+    # Match counter shown while an incremental search or query-replace is
+    # running: "    [isearch 3/17]" / "    [replace 4/17]". Empty otherwise.
+    def modeline_search
+      return '' unless search_highlight_active?
+
+      pos = @frame.view_win.sci_get_selection_start
+      index = search_match_index(@search_highlight_text, pos)
+      label = @search_mode == :replace ? 'replace' : 'isearch'
+      "    [#{label} #{index}/#{@search_match_total}]"
     end
 
     def modeline_format(format)

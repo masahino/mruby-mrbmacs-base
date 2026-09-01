@@ -110,9 +110,11 @@ module Mrbmacs
           end
         end
         search_highlight_begin(search_text)
+        @frame.modeline(self)
         view_win.refresh
       end
       search_highlight_end
+      @frame.modeline(self)
       echo_win.sci_clear_all
       echo_win.refresh
     end
@@ -131,7 +133,8 @@ module Mrbmacs
       while (pos = @frame.view_win.sci_search_in_target(str.length, str)) != -1
         if query == true
           @frame.view_win.sci_set_sel(@frame.view_win.sci_get_target_start, @frame.view_win.sci_get_target_end)
-          search_highlight_begin(str)
+          search_highlight_begin(str, :replace)
+          @frame.modeline(self)
           @frame.view_win.refresh
           case @frame.y_or_n("Query replacing #{str} with #{newstr}:")
           when true
@@ -149,6 +152,7 @@ module Mrbmacs
       end
       @frame.view_win.sci_end_undo_action
       search_highlight_end
+      @frame.modeline(self)
     end
 
     def query_replace(str = nil, newstr = nil)

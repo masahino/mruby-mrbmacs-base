@@ -65,3 +65,17 @@ assert('refresh_search_highlight clears the indicator off the current selection'
   clears = view.messages.count { |m| m == Scintilla::SCI_INDICATORCLEARRANGE }
   assert_true clears >= 2
 end
+
+assert('modeline_search is empty unless a search is running') do
+  app = Mrbmacs::TestSupport::Application.new
+  assert_equal '', app.modeline_search
+
+  app.search_highlight_begin('foo')
+  assert_true app.modeline_search.include?('isearch')
+
+  app.search_highlight_begin('bar', :replace)
+  assert_true app.modeline_search.include?('replace')
+
+  app.search_highlight_end
+  assert_equal '', app.modeline_search
+end
