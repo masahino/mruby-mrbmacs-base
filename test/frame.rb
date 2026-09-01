@@ -12,8 +12,12 @@ assert('apply_theme') do
       Scintilla::SCI_SETSELFORE,
       Scintilla::SCI_SETSELBACK,
       Scintilla::SCI_SETELEMENTCOLOUR,
-      Scintilla::SCI_SETELEMENTCOLOUR
+      Scintilla::SCI_SETELEMENTCOLOUR,
+      Scintilla::SCI_INDICSETSTYLE,
+      Scintilla::SCI_INDICSETFORE,
+      Scintilla::SCI_INDICSETALPHA,
+      Scintilla::SCI_INDICSETOUTLINEALPHA
     ],
-    frame.view_win.messages.last(4)
+    frame.view_win.messages.last(8)
   )
 end
