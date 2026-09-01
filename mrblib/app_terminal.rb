@@ -131,6 +131,7 @@ module Mrbmacs
       while (pos = @frame.view_win.sci_search_in_target(str.length, str)) != -1
         if query == true
           @frame.view_win.sci_set_sel(@frame.view_win.sci_get_target_start, @frame.view_win.sci_get_target_end)
+          search_highlight_begin(str)
           @frame.view_win.refresh
           case @frame.y_or_n("Query replacing #{str} with #{newstr}:")
           when true
@@ -147,6 +148,7 @@ module Mrbmacs
         @frame.view_win.sci_set_target_end(@frame.view_win.sci_get_length)
       end
       @frame.view_win.sci_end_undo_action
+      search_highlight_end
     end
 
     def query_replace(str = nil, newstr = nil)
