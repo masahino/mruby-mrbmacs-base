@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :compile, 'Run a compile command for the current project.'
+
     def compile
       default_command = @project.build_command
       default_command = @project.last_build_command if @project.last_build_command != nil
@@ -17,6 +19,8 @@ module Mrbmacs
       )
     end
 
+    describe_command :recompile, 'Repeat the most recent compile command.'
+
     def recompile
       if @project.last_build_command.nil?
         compile
@@ -28,5 +32,6 @@ module Mrbmacs
         )
       end
     end
+
   end
 end

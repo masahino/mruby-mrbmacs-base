@@ -1,16 +1,6 @@
 module Mrbmacs
   # Help commands
   module Command
-    def list_commands
-      text = format_commands
-      setup_result_buffer('*Commands*')
-      @frame.view_win.sci_set_read_only(0)
-      @frame.view_win.sci_set_text(text)
-      @frame.view_win.sci_set_save_point
-      @frame.view_win.sci_set_read_only(1)
-      @frame.view_win.sci_goto_pos(0)
-    end
-
     describe_command(
       :list_commands,
       'List available editor commands.',
@@ -24,6 +14,18 @@ module Mrbmacs
       }
     )
 
+    def list_commands
+      text = format_commands
+      setup_result_buffer('*Commands*')
+      @frame.view_win.sci_set_read_only(0)
+      @frame.view_win.sci_set_text(text)
+      @frame.view_win.sci_set_save_point
+      @frame.view_win.sci_set_read_only(1)
+      @frame.view_win.sci_goto_pos(0)
+    end
+
+    describe_command :describe_bindings, 'List the current key bindings.'
+
     def describe_bindings
       text = format_key_bindings
       setup_result_buffer('*Bindings*')
@@ -33,6 +35,7 @@ module Mrbmacs
       @frame.view_win.sci_set_read_only(1)
       @frame.view_win.sci_goto_pos(0)
     end
+
   end
 
   # Application helpers for help commands
@@ -53,11 +56,8 @@ module Mrbmacs
       name_width = commands.map { |command| command['name'].length }.max || 0
       lines = commands.map do |command|
         description = command['description']
-        line = if description.nil? || description.empty?
-                 command['name']
-               else
-                 "#{command['name'].ljust(name_width)}  #{description}"
-               end
+        description = '(no description)' if description.nil? || description.empty?
+        line = "#{command['name'].ljust(name_width)}  #{description}"
         line += '  [API]' if command['api']
         line
       end

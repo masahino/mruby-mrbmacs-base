@@ -18,6 +18,8 @@ module Mrbmacs
 
   # Command
   module Command
+    describe_command :insert_file, 'Insert the contents of a file at point.'
+
     def insert_file(file_path = nil)
       file_path = read_file_name('insert file: ', @current_buffer.directory) if file_path.nil?
       return if file_path.nil?
@@ -29,6 +31,8 @@ module Mrbmacs
         message('no match')
       end
     end
+
+    describe_command :find_file, 'Open a file.'
 
     def find_file(filename = nil)
       filename = read_file_name('find file: ', @current_buffer.directory) if filename.nil?
@@ -62,6 +66,8 @@ module Mrbmacs
       after_find_file(self, filename)
     end
 
+    describe_command :save_buffer, 'Save the current buffer to its file.'
+
     def save_buffer
       all_text = @frame.view_win.sci_get_text(@frame.view_win.sci_get_length + 1)
       if @current_buffer.encoding != 'utf-8'
@@ -83,6 +89,8 @@ module Mrbmacs
       after_save_buffer(self, @current_buffer.filename)
     end
 
+    describe_command :write_file, 'Write the current buffer to a specified file.'
+
     def write_file(filename = nil)
       if filename.nil?
         filename = read_save_file_name('write file: ', @current_buffer.directory, @current_buffer.basename)
@@ -101,6 +109,7 @@ module Mrbmacs
       apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
       @frame.set_buffer_name(@current_buffer.name)
     end
+
   end
 
   # Application

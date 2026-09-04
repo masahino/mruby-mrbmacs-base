@@ -14,9 +14,13 @@ module Mrbmacs
   end
 
   module Command
+    describe_command :diff_next_hunk, 'Move to the next diff hunk.'
+
     def diff_next_hunk
       move_to_diff_hunk(:next)
     end
+
+    describe_command :diff_previous_hunk, 'Move to the previous diff hunk.'
 
     def diff_previous_hunk
       move_to_diff_hunk(:previous)

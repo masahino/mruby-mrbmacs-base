@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :comment_line, 'Comment or uncomment the current line.'
+
     def comment_line
       @frame.view_win.sci_begin_undo_action
       line = current_line
@@ -24,6 +26,8 @@ module Mrbmacs
       end
     end
 
+    describe_command :uncomment_line, 'Uncomment the current line.'
+
     def uncomment_line
       @frame.view_win.sci_begin_undo_action
       line = current_line
@@ -42,5 +46,6 @@ module Mrbmacs
       end
       @frame.view_win.sci_end_undo_action
     end
+
   end
 end

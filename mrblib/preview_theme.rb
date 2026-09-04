@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :preview_theme, 'Display a preview of the current theme styles.'
+
     def preview_theme
       buffer_name = '*preview_theme*'
       result_buffer = Mrbmacs.get_buffer_from_name(@buffer_list, buffer_name)

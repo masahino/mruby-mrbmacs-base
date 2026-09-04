@@ -16,6 +16,8 @@ module Mrbmacs
 
   # define methods about encodings
   module Command
+    describe_command :set_buffer_file_coding_system, 'Set the file encoding used when saving the current buffer.'
+
     def set_buffer_file_coding_system(code = nil)
       system_encodings = Mrbmacs.encoding_list
       if code.nil?
@@ -30,5 +32,6 @@ module Mrbmacs
       end
       @current_buffer.encoding = code if system_encodings.include?(code.upcase)
     end
+
   end
 end

@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :eval_last_exp, 'Evaluate the expression before point.'
+
     def eval_last_exp
       text, pos = @frame.view_win.sci_get_curline
       begin
@@ -13,6 +15,8 @@ module Mrbmacs
       @frame.view_win.sci_newline
     end
 
+    describe_command :eval_buffer, 'Evaluate the current buffer as Ruby code.'
+
     def eval_buffer
       all_text = @frame.view_win.sci_get_text(@frame.view_win.sci_get_length + 1)
       begin
@@ -22,5 +26,6 @@ module Mrbmacs
       end
       @logger.debug ret
     end
+
   end
 end

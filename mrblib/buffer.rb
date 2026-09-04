@@ -57,6 +57,8 @@ module Mrbmacs
 
   # Command
   module Command
+    describe_command :revert_buffer, 'Reload the current buffer from its file.'
+
     def revert_buffer
       @frame.view_win.sci_set_read_only(0) if @current_buffer.name == '*Messages*'
       @frame.view_win.sci_clear_all
@@ -67,6 +69,8 @@ module Mrbmacs
         @frame.view_win.sci_set_savepoint
       end
     end
+
+    describe_command :kill_buffer, 'Kill a buffer.'
 
     def kill_buffer(buffername = nil)
       return if @buffer_list.size <= 1
@@ -112,6 +116,7 @@ module Mrbmacs
       @frame.modeline(self)
       after_kill_buffer(self, target_buffer)
     end
+
   end
 
   # Application

@@ -59,6 +59,8 @@ module Mrbmacs
 
   # Command
   module Command
+    describe_command :search_project, 'Search the current project for a literal string.'
+
     def search_project
       unless @project && Dir.exist?(@project.root_directory)
         message 'Project is not available'
@@ -78,6 +80,7 @@ module Mrbmacs
       )
       display_project_search_results(query, results, elapsed)
     end
+
   end
 
   class Application

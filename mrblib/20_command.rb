@@ -14,6 +14,8 @@ module Mrbmacs
       end
     end
 
+    describe_command :execute_extended_command, 'Execute an editor command by name.'
+
     def execute_extended_command
       input_str = @frame.echo_gets('M-x ') do |input_text|
         command_candidate = @command_list.select { |item| item.start_with?(input_text) }
@@ -32,6 +34,7 @@ module Mrbmacs
         message "#{command} error"
       end
     end
+
   end
 
   # Application

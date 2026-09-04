@@ -7,6 +7,15 @@ assert('list_commands has description and API metadata') do
   assert_false metadata['api']['input_schema']['additionalProperties']
 end
 
+assert('internal methods are not editor commands') do
+  commands = Mrbmacs::Command.instance_methods
+
+  assert_false commands.include?(:insert)
+  assert_false commands.include?(:vc_refresh_gutter)
+  assert_nil Mrbmacs::Command.metadata[:insert]
+  assert_nil Mrbmacs::Command.metadata[:vc_refresh_gutter]
+end
+
 assert('command_information includes commands with and without metadata') do
   app = Mrbmacs::TestSupport::Application.new
   app.instance_variable_set(
@@ -16,8 +25,12 @@ assert('command_information includes commands with and without metadata') do
 
   assert_equal(
     [
-      { 'name' => 'describe-bindings', 'description' => nil, 'api' => false },
-      { 'name' => 'find-file', 'description' => nil, 'api' => false },
+      {
+        'name' => 'describe-bindings',
+        'description' => 'List the current key bindings.',
+        'api' => false
+      },
+      { 'name' => 'find-file', 'description' => 'Open a file.', 'api' => false },
       {
         'name' => 'list-commands',
         'description' => 'List available editor commands.',
@@ -37,9 +50,19 @@ assert('format_commands shows descriptions when available') do
 
   assert_equal(
     "Available commands\n\n" \
-    "describe-bindings\n" \
-    "find-file\n" \
+    "describe-bindings  List the current key bindings.\n" \
+    "find-file          Open a file.\n" \
     "list-commands      List available editor commands.  [API]\n",
+    app.format_commands
+  )
+end
+
+assert('format_commands marks a missing description') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.instance_variable_set(:@command_list, ['unregistered_command'])
+
+  assert_equal(
+    "Available commands\n\nunregistered-command  (no description)\n",
     app.format_commands
   )
 end

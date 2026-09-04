@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :dmacro_exec, 'Repeat the most recent key sequence dynamically.'
+
     def dmacro_exec
       return if @recent_keys.length < 2
       if @recent_keys[@recent_keys.length - 2] != 'C-t'
@@ -27,6 +29,7 @@ module Mrbmacs
         prefix = ''
       end
     end
+
   end
 
   # Application

@@ -31,6 +31,8 @@ module Mrbmacs
 
   # Command
   module Command
+    describe_command :open_project, 'Set the current project root directory.'
+
     def open_project(root_directory = nil)
       if root_directory.nil?
         root_directory = read_dir_name('Project directory: ', @current_buffer.directory)
@@ -40,5 +42,6 @@ module Mrbmacs
         @frame.modeline(self)
       end
     end
+
   end
 end

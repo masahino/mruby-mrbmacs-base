@@ -143,7 +143,9 @@ module Mrbmacs
     end
   end
 
-  module Command
+  class Application
+    private
+
     def vc_refresh_gutter
       view_win = @frame.view_win
       [
@@ -169,6 +171,11 @@ module Mrbmacs
         view_win.sci_marker_add(line, marker_numbers[type])
       end
     end
+
+  end
+
+  module Command
+    describe_command :vc_diff, 'Display the current file changes from Git.'
 
     def vc_diff
       source_buffer = @current_buffer
@@ -202,5 +209,6 @@ module Mrbmacs
       @frame.view_win.sci_set_save_point
       @frame.view_win.sci_set_read_only(1)
     end
+
   end
 end

@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :select_theme, 'Select and apply an editor theme.'
+
     def select_theme(theme_name = nil)
       themes = Theme.create_theme_list
       if theme_name.nil?
@@ -22,6 +24,7 @@ module Mrbmacs
         end
       end
     end
+
   end
 
   # Theme

@@ -1,15 +1,15 @@
 module Mrbmacs
   # Command
   module Command
-    def insert(text = '')
-      @frame.view_win.sci_insert_text(get_current_pos, text)
-    end
+    describe_command :set_mark, 'Set the mark at the current position.'
 
     def set_mark
       @mark_pos = @frame.view_win.sci_get_current_pos
       @frame.view_win.sci_set_anchor(@mark_pos)
       @frame.view_win.sci_set_selection_mode(0) if @frame.view_win.sci_get_move_extends_selection == 0
     end
+
+    describe_command :copy_region, 'Copy the region between point and mark.'
 
     def copy_region
       win = @frame.view_win
@@ -19,6 +19,8 @@ module Mrbmacs
       win.sci_set_empty_selection(current_pos)
       @mark_pos = nil
     end
+
+    describe_command :cut_region, 'Cut the region between point and mark.'
 
     def cut_region
       return if @mark_pos.nil?
@@ -32,9 +34,13 @@ module Mrbmacs
       @mark_pos = nil
     end
 
+    describe_command :yank, 'Insert the most recently copied or cut text.'
+
     def yank
       @frame.view_win.sci_paste
     end
+
+    describe_command :kill_line, 'Cut text from point to the end of the line.'
 
     def kill_line
       win = @frame.view_win
@@ -50,13 +56,19 @@ module Mrbmacs
       end
     end
 
+    describe_command :isearch_backward, 'Search incrementally backward.'
+
     def isearch_backward
       # isearch_backward
     end
 
+    describe_command :isearch_forward, 'Search incrementally forward.'
+
     def isearch_forward
       # isearch_forward
     end
+
+    describe_command :indent, 'Indent the current line or complete the active candidate.'
 
     def indent
       win = @frame.view_win
@@ -76,21 +88,31 @@ module Mrbmacs
       end
     end
 
+    describe_command :beginning_of_line, 'Move point to the beginning of the line.'
+
     def beginning_of_line
       @frame.view_win.sci_home
     end
+
+    describe_command :end_of_line, 'Move point to the end of the line.'
 
     def end_of_line
       @frame.view_win.sci_lineend
     end
 
+    describe_command :beginning_of_buffer, 'Move point to the beginning of the buffer.'
+
     def beginning_of_buffer
       @frame.view_win.sci_document_start
     end
 
+    describe_command :end_of_buffer, 'Move point to the end of the buffer.'
+
     def end_of_buffer
       @frame.view_win.sci_document_end
     end
+
+    describe_command :newline, 'Insert a newline.'
 
     def newline
       if @frame.view_win.sci_autoc_active
@@ -101,11 +123,15 @@ module Mrbmacs
       end
     end
 
+    describe_command :save_buffers_kill_terminal, 'Exit mrbmacs.'
+
     def save_buffers_kill_terminal
       before_save_buffers_kill_terminal(self)
       @frame.exit
       exit
     end
+
+    describe_command :keyboard_quit, 'Cancel the current editor operation.'
 
     def keyboard_quit
       @frame.view_win.sci_set_empty_selection(get_current_pos)
@@ -113,6 +139,8 @@ module Mrbmacs
       @frame.view_win.sci_calltip_cancel
       @mark_pos = nil
     end
+
+    describe_command :clear_rectangle, 'Replace the selected rectangle with spaces.'
 
     def clear_rectangle
       @frame.view_win.sci_set_selection_mode(1)
@@ -130,6 +158,8 @@ module Mrbmacs
       @mark_pos = nil
     end
 
+    describe_command :delete_rectangle, 'Delete the selected rectangle.'
+
     def delete_rectangle
       @frame.view_win.sci_set_selection_mode(1)
       return if @mark_pos.nil?
@@ -139,9 +169,13 @@ module Mrbmacs
       @mark_pos = nil
     end
 
+    describe_command :recenter, 'Center the current line in the window.'
+
     def recenter
       @frame.view_win.sci_vertical_centre_caret
     end
+
+    describe_command :downcase_word, 'Convert the following word to lowercase.'
 
     def downcase_word
       current_pos = @frame.view_win.sci_get_current_pos
@@ -154,6 +188,8 @@ module Mrbmacs
       @frame.view_win.sci_add_text(word.length, word.downcase)
     end
 
+    describe_command :upcase_word, 'Convert the following word to uppercase.'
+
     def upcase_word
       current_pos = @frame.view_win.sci_get_current_pos
       wordend_pos = word_end_pos(current_pos)
@@ -163,6 +199,7 @@ module Mrbmacs
       @frame.view_win.sci_delete_range(current_pos, word.length)
       @frame.view_win.sci_add_text(word.length, word.upcase)
     end
+
   end
 
   # Application

@@ -231,7 +231,7 @@ assert('vc_refresh_gutter replaces VC markers') do
   before_delete = messages.count { |message| message == Scintilla::SCI_MARKERDELETEALL }
   before_add = messages.count { |message| message == Scintilla::SCI_MARKERADD }
 
-  app.vc_refresh_gutter
+  app.send(:vc_refresh_gutter)
 
   assert_equal 3, messages.count { |message| message == Scintilla::SCI_MARKERDELETEALL } - before_delete
   assert_equal 4, messages.count { |message| message == Scintilla::SCI_MARKERADD } - before_add

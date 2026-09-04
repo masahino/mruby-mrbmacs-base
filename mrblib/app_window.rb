@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :other_window, 'Select the next editor window.'
+
     def other_window
       return if @frame.edit_win_list.size == 0
 
@@ -12,22 +14,32 @@ module Mrbmacs
       # set_buffer_mode(@current_buffer)
     end
 
+    describe_command :delete_window, 'Delete the current editor window.'
+
     def delete_window
       @frame.delete_window(@frame.edit_win)
       @current_buffer = @frame.edit_win.buffer
     end
 
+    describe_command :delete_other_window, 'Delete all editor windows except the current one.'
+
     def delete_other_window
       @frame.delete_other_window
     end
+
+    describe_command :split_window_vertically, 'Split the current window into upper and lower windows.'
 
     def split_window_vertically
       split_window(false)
     end
 
+    describe_command :split_window_horizontally, 'Split the current window into left and right windows.'
+
     def split_window_horizontally
       split_window(true)
     end
+
+    describe_command :enlarge_window, 'Enlarge the current window vertically.'
 
     def enlarge_window(line = 1)
       return if @frame.edit_win_list.size == 1
@@ -35,11 +47,14 @@ module Mrbmacs
       @frame.enlarge_window(@frame.edit_win, line)
     end
 
+    describe_command :enlarge_window_horizontally, 'Enlarge the current window horizontally.'
+
     def enlarge_window_horizontally(line = 1)
       return if @frame.edit_win_list.size == 1
 
       @frame.enlarge_window_horizontally(@frame.edit_win, line)
     end
+
   end
 
   # Application

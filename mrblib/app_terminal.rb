@@ -1,6 +1,8 @@
 module Mrbmacs
   # Command
   module Command
+    describe_command :query_replace, 'Replace text interactively with confirmation.'
+
     def query_replace
       message 'not yet implemented'
     end
