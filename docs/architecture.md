@@ -32,16 +32,16 @@ Editor state is organised into three classes, all in `mruby-mrbmacs-base`:
 
 | Class | File | Owns |
 | --- | --- | --- |
-| `Application` | `app.rb` (+ many reopens) | lifecycle, argument parsing, config, keymap dispatch, commands, the notification event table, `run` |
+| `Application` | `10_app.rb` (+ many reopens) | lifecycle, argument parsing, config, keymap dispatch, commands, the notification event table, `run` |
 | `FrameBase` | `frame.rb` | the set of edit windows, theme application, mode-line string, window switch / split / enlarge, `echo_*` (minibuffer) contract |
 | `EditWindow` | `window.rb` | one Scintilla view + its buffer: margins, markers, theme styling, mode settings |
 
 Most feature code is added to `Application` by **reopening** it from many
-files (`basic.rb`, `fileio.rb`, `buffer.rb`, `command.rb`, `completion.rb`,
+files (`basic.rb`, `fileio.rb`, `buffer.rb`, `20_command.rb`, `completion.rb`,
 `event.rb`, `sci_event.rb`, `app_keybind.rb`, …). Commands are instance
 methods on `Application` or on the `Command` module mixed into it.
 
-`app.rb#run` calls `editloop`, which is **not defined in base** — each
+`10_app.rb#run` calls `editloop`, which is **not defined in base** — each
 frontend provides it (or, for callback-driven toolkits, does not: the toolkit
 owns the loop).
 
@@ -111,7 +111,7 @@ helper under `tools/`).
 
 | Subsystem | Shared (base) | Forked, and why |
 | --- | --- | --- |
-| lifecycle, args, config, recent keys | `app.rb` | — |
+| lifecycle, args, config, recent keys | `10_app.rb` | — |
 | keymap definition | `keymap.rb`, `app_keybind.rb` | `set_keybind` re-implemented in `application_cocoa.rb` (`C-` maps to Command, not Control) |
 | commands (movement, file, buffer, comment, macro, …) | `basic.rb`, `fileio.rb`, `buffer.rb`, … | small GTK overrides (`*-gtk.rb`, 1–51 lines) |
 | notification dispatch (`add_sci_event`, `call_sci_event`) | `event.rb`, `sci_event.rb` | delivery mechanism differs (queue vs synchronous), dispatch table is shared |
