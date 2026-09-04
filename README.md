@@ -8,5 +8,6 @@ Scintilla based text editor
 ## Developer documentation
 
 - [Architecture: base and frontends](docs/architecture.md)
+- [Command metadata API](docs/command-api.md)
 - [Syntax style system design](docs/style-system-design.md)
 - [Version control internals](docs/vc-internals.md)

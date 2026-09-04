@@ -1,6 +1,29 @@
 module Mrbmacs
   # Help commands
   module Command
+    def list_commands
+      text = format_commands
+      setup_result_buffer('*Commands*')
+      @frame.view_win.sci_set_read_only(0)
+      @frame.view_win.sci_set_text(text)
+      @frame.view_win.sci_set_save_point
+      @frame.view_win.sci_set_read_only(1)
+      @frame.view_win.sci_goto_pos(0)
+    end
+
+    describe_command(
+      :list_commands,
+      'List available editor commands.',
+      {
+        'input_schema' => {
+          'type' => 'object',
+          'properties' => {},
+          'required' => [],
+          'additionalProperties' => false
+        }
+      }
+    )
+
     def describe_bindings
       text = format_key_bindings
       setup_result_buffer('*Bindings*')
@@ -14,6 +37,33 @@ module Mrbmacs
 
   # Application helpers for help commands
   class Application
+    def command_information
+      @command_list.map do |command|
+        metadata = Command.metadata[command.to_sym]
+        {
+          'name' => command.tr('_', '-'),
+          'description' => metadata.nil? ? nil : metadata['description'],
+          'api' => !metadata.nil? && !metadata['api'].nil?
+        }
+      end.sort { |a, b| a['name'] <=> b['name'] }
+    end
+
+    def format_commands
+      commands = command_information
+      name_width = commands.map { |command| command['name'].length }.max || 0
+      lines = commands.map do |command|
+        description = command['description']
+        line = if description.nil? || description.empty?
+                 command['name']
+               else
+                 "#{command['name'].ljust(name_width)}  #{description}"
+               end
+        line += '  [API]' if command['api']
+        line
+      end
+      (["Available commands", ''] + lines).join("\n") + "\n"
+    end
+
     def scintilla_command_names
       command_names = {}
       names = Scintilla.constants.map(&:to_s).select do |name|

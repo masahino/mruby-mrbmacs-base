@@ -1,6 +1,19 @@
 module Mrbmacs
   # command
   module Command
+    @metadata = {}
+
+    class << self
+      attr_reader :metadata
+
+      def describe_command(name, description, api = nil)
+        @metadata[name.to_sym] = {
+          'description' => description,
+          'api' => api
+        }
+      end
+    end
+
     def execute_extended_command
       input_str = @frame.echo_gets('M-x ') do |input_text|
         command_candidate = @command_list.select { |item| item.start_with?(input_text) }
