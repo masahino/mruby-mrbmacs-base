@@ -53,15 +53,33 @@ module Mrbmacs
 
     def format_commands
       commands = command_information
+      keybindings = command_keybindings
       name_width = commands.map { |command| command['name'].length }.max || 0
       lines = commands.map do |command|
         description = command['description']
         description = '(no description)' if description.nil? || description.empty?
         line = "#{command['name'].ljust(name_width)}  #{description}"
+        keys = keybindings[command['name'].tr('-', '_')]
+        line += "  (#{keys.join(', ')})" unless keys.nil?
         line += '  [API]' if command['api']
         line
       end
       (["Available commands", ''] + lines).join("\n") + "\n"
+    end
+
+    def command_keybindings
+      bindings = {}
+      effective_keybindings.each do |key, action|
+        next unless action.is_a?(String)
+
+        command = action.tr('-', '_')
+        next if command == 'prefix'
+
+        bindings[command] ||= []
+        bindings[command] << key
+      end
+      bindings.each_value { |keys| keys.sort! }
+      bindings
     end
 
     def scintilla_command_names

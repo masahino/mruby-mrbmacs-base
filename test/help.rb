@@ -47,11 +47,19 @@ assert('format_commands shows descriptions when available') do
     :@command_list,
     ['list_commands', 'find_file', 'describe_bindings']
   )
+  app.define_singleton_method(:effective_keybindings) do
+    {
+      'C-x C-f' => 'find_file',
+      'C-c f' => 'find-file',
+      'C-x' => 'prefix',
+      'C-p' => Scintilla::SCI_LINEUP
+    }
+  end
 
   assert_equal(
     "Available commands\n\n" \
     "describe-bindings  List the current key bindings.\n" \
-    "find-file          Open a file.\n" \
+    "find-file          Open a file.  (C-c f, C-x C-f)\n" \
     "list-commands      List available editor commands.  [API]\n",
     app.format_commands
   )
@@ -60,10 +68,28 @@ end
 assert('format_commands marks a missing description') do
   app = Mrbmacs::TestSupport::Application.new
   app.instance_variable_set(:@command_list, ['unregistered_command'])
+  app.define_singleton_method(:effective_keybindings) { {} }
 
   assert_equal(
     "Available commands\n\nunregistered-command  (no description)\n",
     app.format_commands
+  )
+end
+
+assert('command_keybindings includes only string command bindings') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.define_singleton_method(:effective_keybindings) do
+    {
+      'C-x C-f' => 'find_file',
+      'C-c f' => 'find-file',
+      'C-x' => 'prefix',
+      'C-p' => Scintilla::SCI_LINEUP
+    }
+  end
+
+  assert_equal(
+    { 'find_file' => ['C-c f', 'C-x C-f'] },
+    app.command_keybindings
   )
 end
 
