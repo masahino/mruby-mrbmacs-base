@@ -89,8 +89,7 @@ module Mrbmacs
       # Refresh after each match: the document shifts as replacements happen,
       # and this keeps the lazy-highlight off the current match.
       search_highlight_begin(@replace_search_text, :replace)
-      prompt = "Query replacing #{@replace_search_text} with #{@replacement_text}: (y, n, !, q) "
-      @frame.start_query_replace(prompt)
+      @frame.start_query_replace(query_replace_prompt(@replace_search_text, @replacement_text))
       @frame.modeline(self)
     end
 
@@ -103,31 +102,6 @@ module Mrbmacs
       @replace_next_pos = view.sci_get_target_end
     end
 
-    def replace_all_from(start_pos, search_text, replacement_text)
-      view = @frame.view_win
-      count = 0
-      with_undo_action do
-        next_pos = start_pos
-        loop do
-          view.sci_set_target_start(next_pos)
-          view.sci_set_target_end(view.sci_get_length)
-          break if view.sci_search_in_target(search_text.bytesize, search_text) == -1
-
-          view.sci_replace_target(replacement_text.bytesize, replacement_text)
-          count += 1
-          next_pos = view.sci_get_target_end
-        end
-      end
-      count
-    end
-
-    def with_undo_action
-      @frame.view_win.sci_begin_undo_action
-      yield
-    ensure
-      @frame.view_win.sci_end_undo_action
-    end
-
     def finish_query_replace_with_summary
       finish_query_replace(replace_summary(@replace_count))
     end
@@ -138,10 +112,6 @@ module Mrbmacs
       @frame.finish_query_replace
       @frame.echo_puts(message)
       @frame.modeline(self)
-    end
-
-    def replace_summary(count)
-      "Replaced #{count} occurrence#{count == 1 ? '' : 's'}"
     end
   end
 end

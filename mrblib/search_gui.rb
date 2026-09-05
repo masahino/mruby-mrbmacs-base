@@ -75,7 +75,7 @@ module Mrbmacs
     def start_or_repeat_isearch(backward)
       if @isearch_active
         @isearch_backward = backward
-        @frame.update_isearch_prompt(isearch_prompt)
+        @frame.update_isearch_prompt(isearch_prompt(@isearch_backward))
         repeat_isearch
         return
       end
@@ -84,7 +84,7 @@ module Mrbmacs
       @isearch_backward = backward
       @isearch_origin = @frame.view_win.sci_get_current_pos
       @isearch_text = ''
-      @frame.start_isearch(isearch_prompt)
+      @frame.start_isearch(isearch_prompt(@isearch_backward))
     end
 
     def repeat_isearch
@@ -95,7 +95,7 @@ module Mrbmacs
         begin
           @isearch_setting_text = true
           @frame.set_isearch_text(@isearch_text)
-          @frame.update_isearch_prompt(isearch_prompt)
+          @frame.update_isearch_prompt(isearch_prompt(@isearch_backward))
         ensure
           @isearch_setting_text = false
         end
@@ -112,12 +112,7 @@ module Mrbmacs
       end_pos = @isearch_backward ? 0 : view.sci_get_length
       view.sci_set_target_start(start_pos)
       view.sci_set_target_end(end_pos)
-      found = view.sci_search_in_target(@isearch_text.bytesize, @isearch_text)
-      if found == -1 && wrap
-        view.sci_set_target_start(@isearch_backward ? view.sci_get_length : 0)
-        view.sci_set_target_end(@isearch_backward ? 0 : view.sci_get_length)
-        found = view.sci_search_in_target(@isearch_text.bytesize, @isearch_text)
-      end
+      found = search_in_target_with_wrap(view, @isearch_text, @isearch_backward, wrap)
       if found == -1
         search_highlight_begin(@isearch_text)
         @frame.modeline(self)
@@ -137,10 +132,6 @@ module Mrbmacs
       @isearch_active = false
       @frame.finish_isearch
       @frame.modeline(self)
-    end
-
-    def isearch_prompt
-      @isearch_backward ? 'I-search backward: ' : 'I-search: '
     end
   end
 end

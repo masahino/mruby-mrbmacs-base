@@ -28,23 +28,20 @@ assert('Mrbmacs::ApplicationTerminal repeats forward search with C-s, then C-g c
   assert_equal 0, view.current_pos
 end
 
-assert('Mrbmacs::ApplicationTerminal wraps only on a following C-s after a failed search') do
+assert('Mrbmacs::ApplicationTerminal wraps a forward search back to the start on C-s') do
   buffer = Mrbmacs::Buffer.new('*scratch*')
   view = Mrbmacs::TestSupport::GuiSciView.new
   view.text = 'alpha beta alpha'
   echo_win = Mrbmacs::TestSupport::GuiSciView.new
   frame = Mrbmacs::TestSupport::FrameTerminal.new(view, echo_win)
-  # unlike ApplicationGui#perform_isearch, the terminal loop does not
-  # immediately retry on a failed search: the first C-s past the last match
-  # only resets to the top of the buffer, and a further C-s is needed to
-  # actually find the wrapped-around match.
+  # matches ApplicationGui#perform_isearch: a C-s past the last match wraps
+  # and finds the first match again immediately, in the same keypress.
   frame.keys = %w[a l p h a C-s C-s Enter]
   app = build_terminal_application_for_test(frame, buffer)
 
   app.isearch_forward
 
-  assert_equal [11, 16], view.selections.last
-  assert_equal 0, view.current_pos
+  assert_equal [0, 5], view.selections.last
 end
 
 assert('Mrbmacs::ApplicationTerminal searches backward from the end of the buffer') do
