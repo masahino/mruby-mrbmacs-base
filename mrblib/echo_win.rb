@@ -1,8 +1,17 @@
 module Mrbmacs
   # base
   class FrameBase
+    # Show `prompt` in the echo window's text margin. Identical across every
+    # frontend except for the trailing refresh: terminal Scintilla bindings
+    # (curses, termbox) render to a character grid and must be told to
+    # redraw; cocoa/gtk render through an async native compositor and never
+    # define `refresh` at all. Asking the view itself, rather than checking
+    # a platform allowlist, means a future frontend needs no change here
+    # either way — it just needs to get its own `refresh` right.
     def echo_set_prompt(prompt)
-      raise NotImplementedError
+      @echo_win.sci_set_margin_widthn(3, @echo_win.sci_text_width(Scintilla::STYLE_DEFAULT, prompt))
+      @echo_win.sci_margin_set_text(0, prompt)
+      @echo_win.refresh if @echo_win.respond_to?(:refresh)
     end
 
     def read_buffername(prompt)
