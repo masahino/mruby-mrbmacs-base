@@ -28,7 +28,7 @@ module Mrbmacs
 
     def print_usage
       puts "Usage: #{$0} [OPTION-OR-FILENAME]..."
-      puts '-q                 do not load ~/.mrbmacs'
+      puts '-q                 do not load ~/.mrbmacsrc'
       puts '-l, --load FILE    load ruby file'
       puts '-d, --debug        set debugging flags (set $DEBUG to true)'
       puts '-h, --help         Prints this help'
