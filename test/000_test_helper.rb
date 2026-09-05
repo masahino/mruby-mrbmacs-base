@@ -95,7 +95,235 @@ module Mrbmacs
         @height = height
       end
     end
+
+    # A Scintilla view stand-in with a real sci_search_in_target /
+    # sci_replace_target implementation over an in-memory @text string, so
+    # ApplicationGui's isearch/query-replace logic can be exercised with real
+    # search behaviour instead of canned per-message return values
+    # (Scintilla::TestSupport::Scintilla only supports the latter, and other
+    # tests in this suite depend on that). Used for both the edit view and
+    # the echo view in search_gui.rb / replace_gui.rb tests.
+    class GuiSciView
+      attr_accessor :current_pos, :text
+      attr_reader :indicator_fills, :indicator_clears
+      attr_reader :replacement_lengths, :search_lengths
+      attr_reader :selections, :undo_actions
+
+      def initialize
+        @current_pos = 0
+        @text = ''
+        @selection_start = 0
+        @selection_end = 0
+        @selections = []
+        @target_start = 0
+        @target_end = 0
+        @search_lengths = []
+        @replacement_lengths = []
+        @indicator_fills = []
+        @indicator_clears = []
+        @undo_actions = []
+      end
+
+      def sci_get_readonly
+        false
+      end
+
+      def sci_get_current_pos
+        @current_pos
+      end
+
+      def sci_goto_pos(position)
+        @current_pos = position
+        @selection_start = position
+        @selection_end = position
+      end
+
+      def sci_get_selection_start
+        @selection_start
+      end
+
+      def sci_get_selection_end
+        @selection_end
+      end
+
+      def sci_set_sel(start_pos, end_pos)
+        @selection_start = start_pos
+        @selection_end = end_pos
+        @current_pos = end_pos
+        @selections << [start_pos, end_pos]
+      end
+
+      def sci_set_target_start(position)
+        @target_start = position
+      end
+
+      def sci_set_target_end(position)
+        @target_end = position
+      end
+
+      def sci_get_target_start
+        @target_start
+      end
+
+      def sci_get_target_end
+        @target_end
+      end
+
+      def sci_set_indicator_current(indicator)
+        @current_indicator = indicator
+      end
+
+      def sci_get_modify
+        0
+      end
+
+      def sci_get_first_visible_line
+        0
+      end
+
+      def sci_position_from_line(_line)
+        0
+      end
+
+      def sci_get_line_end_position(_line)
+        @text.bytesize
+      end
+
+      def sci_lines_on_screen
+        20
+      end
+
+      def sci_indicator_fill_range(start_pos, length)
+        @indicator_fills << [start_pos, length]
+      end
+
+      def sci_indicator_clear_range(start_pos, length)
+        @indicator_clears << [start_pos, length]
+      end
+
+      def sci_search_in_target(length, search_text)
+        @search_lengths << length
+        if @target_start <= @target_end
+          target = @text.byteslice(@target_start, @target_end - @target_start)
+          char_offset = target.index(search_text)
+          return -1 if char_offset.nil?
+
+          found = @target_start + target[0...char_offset].bytesize
+        else
+          target = @text.byteslice(@target_end, @target_start - @target_end)
+          char_offset = target.rindex(search_text)
+          return -1 if char_offset.nil?
+
+          found = @target_end + target[0...char_offset].bytesize
+        end
+        @target_start = found
+        @target_end = found + search_text.bytesize
+        found
+      end
+
+      def sci_replace_target(length, replacement_text)
+        @replacement_lengths << length
+        prefix = @text.byteslice(0, @target_start)
+        suffix = @text.byteslice(@target_end, @text.bytesize - @target_end)
+        @text = prefix + replacement_text + suffix
+        @target_end = @target_start + replacement_text.bytesize
+        @selection_start = @target_start
+        @selection_end = @target_end
+        @current_pos = @target_end
+        replacement_text.bytesize
+      end
+
+      def sci_begin_undo_action
+        @undo_actions << :begin
+      end
+
+      def sci_end_undo_action
+        @undo_actions << :end
+      end
+
+      def sci_clear_all
+        @text = ''
+      end
+
+      def sci_add_text(_length, text)
+        @text += text
+      end
+
+      def sci_document_end
+      end
+
+      def sci_get_line(_line)
+        @text
+      end
+
+      def sci_get_length
+        @text.bytesize
+      end
+
+      def sci_grab_focus
+      end
+    end
+
+    # A minimal FrameBase-shaped double for ApplicationGui's echo-area
+    # isearch/query-replace contract (start_isearch, echo_key_mode's Ruby
+    # side, …). GuiSciView instances stand in for the edit view and echo
+    # view; echo_gets responses are supplied up front via #echo_responses=.
+    class FrameGui
+      attr_accessor :view_win, :echo_win
+      attr_reader :last_message
+
+      def initialize(view_win, echo_win)
+        @view_win = view_win
+        @echo_win = echo_win
+        @echo_responses = []
+      end
+
+      def echo_responses=(responses)
+        @echo_responses = responses
+      end
+
+      def echo_gets(_prompt, _text = '')
+        @echo_responses.shift
+      end
+
+      def echo_puts(text)
+        @last_message = text
+      end
+
+      def modeline(_app)
+      end
+
+      def start_isearch(_prompt)
+      end
+
+      def update_isearch_prompt(_prompt)
+      end
+
+      def set_isearch_text(text)
+        @echo_win.sci_clear_all
+        @echo_win.sci_add_text(text.bytesize, text)
+      end
+
+      def finish_isearch
+      end
+
+      def start_query_replace(_prompt)
+      end
+
+      def finish_query_replace
+      end
+    end
   end
+end
+
+def build_gui_application_for_test(frame, buffer)
+  app = Mrbmacs::ApplicationGui.allocate
+  app.init_instance_variables
+  app.instance_variable_set(:@logger, app.init_logfile)
+  app.frame = frame
+  app.current_buffer = buffer
+  app.buffer_list = [buffer]
+  app
 end
 
 #class << Curses

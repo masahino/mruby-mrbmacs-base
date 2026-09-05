@@ -50,6 +50,12 @@ owns the loop).
 - `ApplicationTerminal < Application` (`app_terminal.rb`) — behaviour common
   to the two terminal frontends: blocking incremental search, blocking
   query-replace, clipboard via `pbcopy`/`pbpaste`/`clip.exe`.
+- `ApplicationGui < Application` (`app_gui.rb`, `search_gui.rb`,
+  `replace_gui.rb`) — behaviour common to the two callback-driven frontends:
+  event-driven incremental search and query-replace through the echo-area
+  minibuffer (`echo_key_press`, `perform_isearch`, `query_replace_key_press`,
+  …), and the isearch/replace instance variables. Parallel to
+  `ApplicationTerminal`; the two intermediate classes never meet.
 - `Frame < FrameBase` (`frame.rb`) — currently an empty class. The two
   terminal frontends and GTK reopen `Mrbmacs::Frame`; Cocoa subclasses
   `FrameBase` directly. Treat `Frame` as "the frame terminal frontends
@@ -59,8 +65,8 @@ owns the loop).
 
 | Frontend | Application class | Frame | EditWindow |
 | --- | --- | --- | --- |
-| cocoa | `ApplicationCocoa < Application` | `FrameCocoa < FrameBase` | `PaneCocoa < EditWindow` |
-| gtk | `ApplicationGtk < Application` | reopens `Frame` | reopens base window |
+| cocoa | `ApplicationCocoa < ApplicationGui` | `FrameCocoa < FrameBase` | `PaneCocoa < EditWindow` |
+| gtk | `ApplicationGtk < ApplicationGui` | reopens `Frame` | reopens base window |
 | curses | `ApplicationCurses < ApplicationTerminal` | reopens `Frame` | reopens `EditWindow` |
 | termbox | `ApplicationTermbox < ApplicationTerminal` | reopens `Frame` | `EditWindowTermbox < EditWindow` |
 
@@ -120,8 +126,8 @@ helper under `tools/`).
 | mode-line string | `FrameBase#get_mode_str` | mode-line *placement* forked (`modeline` in every frontend Frame) |
 | window split / enlarge | `app_window.rb`, `FrameBase` (terminal) | Cocoa overrides for `NSSplitView` |
 | minibuffer (`echo_gets`, `echo_set_prompt`, `echo_puts`, `complete_echo_input`, `select_buffer`, `y_or_n`) | contract only (`FrameBase`, all `NotImplementedError`) | full re-implementation in `echo_win_termbox.rb`, `frame_curses.rb`, `frame_cocoa.rb`, `frame-gtk.rb` (GTK mirrors Cocoa: `SC_MARGIN_TEXT` prompt + nested `gtk_main` in `mrbmacs-echo.c`) |
-| incremental search | — | `app_terminal.rb#isearch` (blocking), `search_cocoa.rb` (events), gtk `find.rb` (events) |
-| query-replace | — | `app_terminal.rb` (blocking), `replace_cocoa.rb` (events), gtk `replace.rb` (events) |
+| incremental search | `search_gui.rb` (`ApplicationGui`, event-driven, shared by cocoa+gtk) | `app_terminal.rb#isearch` (blocking loop, terminal only) |
+| query-replace | `replace_gui.rb` (`ApplicationGui`, event-driven, shared by cocoa+gtk) | `app_terminal.rb` (blocking loop, terminal only) |
 | clipboard | — | `app_terminal.rb` (shell out), Cocoa/GTK use toolkit |
 
 ## Naming and structure caveats
@@ -138,20 +144,25 @@ helper under `tools/`).
   file/directory prompts: `read_file_name` / `read_dir_name` /
   `read_save_file_name` and `find_file` are no longer overridden — GTK uses
   the base `echo_gets` versions like every other frontend (the GtkFileChooser
-  path is gone). Still open: `find.rb` and `replace.rb` disagree on whether
-  to reopen `Application` or `ApplicationGtk`, and gtk `replace.rb` expects a
-  tri-state `y_or_n` (`true` / `false` / `nil`) while the echo-area `y_or_n`
-  returns only a boolean (C-g == "no").
+  path is gone). GTK's incremental search and query-replace also moved off
+  the old `find.rb`/`replace.rb` (deleted) and onto the same non-modal
+  echo-area state machine as Cocoa, now shared as `ApplicationGui` in base;
+  only the raw-keyval-to-key-string translation stays GTK-specific
+  (`echo_key_gtk.rb`).
 
 ## Known duplication (candidates for consolidation)
 
 Recorded here so the analysis is not repeated. None of these are scheduled.
 
-1. **Iterative search / replace primitive.** The "search target, wrap,
+1. **Iterative search / replace primitive.** ~~The "search target, wrap,
    select" step and the "find next match, replace, advance" step are
-   frontend-independent but written three times (terminal / cocoa / gtk) with
-   different structure. Extracting them to `Application` would leave only the
-   blocking-loop vs state-machine shell per frontend.
+   frontend-independent but written three times.~~ Resolved for cocoa/gtk:
+   both now share `search_gui.rb`/`replace_gui.rb` via `ApplicationGui`.
+   `app_terminal.rb`'s blocking-loop version is still separate, since its
+   control flow (a `loop do … waitkey … end`) has no event-driven
+   counterpart to share with; extracting the frontend-independent "search
+   target, wrap, select" step out of both shapes remains a candidate (see
+   `ApplicationGui#perform_isearch` vs `ApplicationTerminal#isearch`).
 2. **`complete_echo_input`** (candidate split, `common_prefix`, insert
    suffix, `sci_autoc_show`) is duplicated in `frame_cocoa.rb`,
    `frame-gtk.rb`, and `echo_win_termbox.rb`.
