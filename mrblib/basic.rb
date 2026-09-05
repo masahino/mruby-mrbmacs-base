@@ -56,18 +56,6 @@ module Mrbmacs
       end
     end
 
-    describe_command :isearch_backward, 'Search incrementally backward.'
-
-    def isearch_backward
-      # isearch_backward
-    end
-
-    describe_command :isearch_forward, 'Search incrementally forward.'
-
-    def isearch_forward
-      # isearch_forward
-    end
-
     describe_command :indent, 'Indent the current line or complete the active candidate.'
 
     def indent

@@ -260,7 +260,14 @@ module Mrbmacs
         @text.bytesize
       end
 
+      def sci_get_text(_length)
+        @text
+      end
+
       def sci_grab_focus
+      end
+
+      def refresh
       end
     end
 
@@ -313,11 +320,83 @@ module Mrbmacs
       def finish_query_replace
       end
     end
+
+    # A minimal FrameBase-shaped double for ApplicationTerminal's blocking
+    # isearch/replace loops. Keys are supplied up front as plain strings
+    # (already in the 'C-s' / 'a' / 'Enter' form ApplicationTerminal's
+    # strfkey result takes) via #keys=; waitkey/strfkey just replay them, so
+    # there is no need to model TermKey objects. GuiSciView instances stand
+    # in for the edit view and echo view.
+    class FrameTerminal
+      attr_accessor :view_win, :echo_win
+      attr_reader :last_message, :last_prompt
+
+      def initialize(view_win, echo_win)
+        @view_win = view_win
+        @echo_win = echo_win
+        @keys = []
+        @echo_responses = []
+        @y_or_n_responses = []
+      end
+
+      def keys=(keys)
+        @keys = keys
+      end
+
+      def echo_responses=(responses)
+        @echo_responses = responses
+      end
+
+      def y_or_n_responses=(responses)
+        @y_or_n_responses = responses
+      end
+
+      def waitkey(_win)
+        [0, @keys.shift]
+      end
+
+      def strfkey(key)
+        key
+      end
+
+      def send_key(key, win)
+        win.sci_add_text(key.bytesize, key)
+      end
+
+      def echo_set_prompt(prompt)
+        @last_prompt = prompt
+      end
+
+      def echo_gets(_prompt, _text = '')
+        @echo_responses.shift
+      end
+
+      def echo_puts(text)
+        @last_message = text
+      end
+
+      def y_or_n(_prompt)
+        @y_or_n_responses.shift
+      end
+
+      def modeline(_app)
+      end
+    end
   end
 end
 
 def build_gui_application_for_test(frame, buffer)
   app = Mrbmacs::ApplicationGui.allocate
+  app.init_instance_variables
+  app.instance_variable_set(:@logger, app.init_logfile)
+  app.frame = frame
+  app.current_buffer = buffer
+  app.buffer_list = [buffer]
+  app
+end
+
+def build_terminal_application_for_test(frame, buffer)
+  app = Mrbmacs::ApplicationTerminal.allocate
   app.init_instance_variables
   app.instance_variable_set(:@logger, app.init_logfile)
   app.frame = frame

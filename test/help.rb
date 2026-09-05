@@ -8,6 +8,16 @@ assert('list_commands has description and API metadata') do
   assert_equal :list_commands_api, metadata['api']['handler']
 end
 
+assert('isearch_forward, isearch_backward, replace_string and query_replace are described commands') do
+  %i[isearch_forward isearch_backward replace_string query_replace].each do |name|
+    metadata = Mrbmacs::Command.metadata[name]
+
+    assert_false metadata.nil?
+    assert_false metadata['description'].nil?
+    assert_true Mrbmacs::Command.instance_methods.include?(name)
+  end
+end
+
 assert('internal methods are not editor commands') do
   commands = Mrbmacs::Command.instance_methods
 
