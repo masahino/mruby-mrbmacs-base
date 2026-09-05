@@ -25,7 +25,19 @@ module Mrbmacs
       @frame.view_win.sci_goto_pos(0)
     end
 
-    describe_command :describe_bindings, 'List the current key bindings.'
+    describe_command(
+      :describe_bindings,
+      'List the current key bindings.',
+      {
+        'input_schema' => {
+          'type' => 'object',
+          'properties' => {},
+          'required' => [],
+          'additionalProperties' => false
+        },
+        'handler' => :command_keybindings_api
+      }
+    )
 
     def describe_bindings
       text = format_key_bindings
@@ -78,6 +90,20 @@ module Mrbmacs
         line
       end
       (["Available commands", ''] + lines).join("\n") + "\n"
+    end
+
+    def command_keybindings_api(arguments)
+      unless arguments.is_a?(Hash) && arguments.empty?
+        raise ArgumentError, 'describe_bindings does not accept arguments'
+      end
+
+      commands = command_keybindings
+      {
+        'commands' => commands,
+        'total_bindings' => commands.values.inject(0) do |total, keys|
+          total + keys.length
+        end
+      }
     end
 
     def command_keybindings

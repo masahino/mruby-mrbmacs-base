@@ -8,6 +8,16 @@ assert('list_commands has description and API metadata') do
   assert_equal :list_commands_api, metadata['api']['handler']
 end
 
+assert('describe_bindings has description and API metadata') do
+  metadata = Mrbmacs::Command.metadata[:describe_bindings]
+
+  assert_equal 'List the current key bindings.', metadata['description']
+  assert_equal({}, metadata['api']['input_schema']['properties'])
+  assert_equal([], metadata['api']['input_schema']['required'])
+  assert_false metadata['api']['input_schema']['additionalProperties']
+  assert_equal :command_keybindings_api, metadata['api']['handler']
+end
+
 assert('isearch_forward, isearch_backward, replace_string and query_replace are described commands') do
   %i[isearch_forward isearch_backward replace_string query_replace].each do |name|
     metadata = Mrbmacs::Command.metadata[name]
@@ -39,7 +49,7 @@ assert('command_information includes commands with and without metadata') do
       {
         'name' => 'describe-bindings',
         'description' => 'List the current key bindings.',
-        'api' => false
+        'api' => true
       },
       { 'name' => 'find-file', 'description' => 'Open a file.', 'api' => false },
       {
@@ -69,7 +79,7 @@ assert('format_commands shows descriptions when available') do
 
   assert_equal(
     "Available commands\n\n" \
-    "describe-bindings  List the current key bindings.\n" \
+    "describe-bindings  List the current key bindings.  [API]\n" \
     "find-file          Open a file.  (C-c f, C-x C-f)\n" \
     "list-commands      List available editor commands.  [API]\n",
     app.format_commands
@@ -102,6 +112,39 @@ assert('command_keybindings includes only string command bindings') do
     { 'find_file' => ['C-c f', 'C-x C-f'] },
     app.command_keybindings
   )
+end
+
+assert('command_keybindings_api returns structured bindings and their total') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.define_singleton_method(:effective_keybindings) do
+    {
+      'C-x C-f' => 'find_file',
+      'C-c f' => 'find-file',
+      'M-x' => 'execute_extended_command',
+      'C-x' => 'prefix',
+      'C-p' => Scintilla::SCI_LINEUP
+    }
+  end
+
+  assert_equal(
+    {
+      'commands' => {
+        'find_file' => ['C-c f', 'C-x C-f'],
+        'execute_extended_command' => ['M-x']
+      },
+      'total_bindings' => 3
+    },
+    app.command_keybindings_api({})
+  )
+end
+
+assert('command_keybindings_api rejects arguments') do
+  app = Mrbmacs::TestSupport::Application.new
+
+  assert_raise(ArgumentError) { app.command_keybindings_api(nil) }
+  assert_raise(ArgumentError) do
+    app.command_keybindings_api('unexpected' => true)
+  end
 end
 
 assert('format_key_bindings shows effective bindings in key order') do
