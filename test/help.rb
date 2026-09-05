@@ -5,6 +5,7 @@ assert('list_commands has description and API metadata') do
   assert_equal({}, metadata['api']['input_schema']['properties'])
   assert_equal([], metadata['api']['input_schema']['required'])
   assert_false metadata['api']['input_schema']['additionalProperties']
+  assert_equal :list_commands_api, metadata['api']['handler']
 end
 
 assert('internal methods are not editor commands') do

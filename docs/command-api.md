@@ -15,8 +15,11 @@ describe_command(method_name, description, api = nil)
 - `api` is optional metadata for exposing the command through an external API.
   Omit it for commands that must remain editor-only.
 
-The API metadata currently contains `input_schema`, a JSON Schema describing
-the arguments accepted by the externally exposed command.
+The API metadata contains:
+
+- `input_schema`, a JSON Schema describing the accepted arguments.
+- `handler`, the `Application` method that receives those arguments and returns
+  a structured result.
 
 ## Command without arguments
 
@@ -36,9 +39,22 @@ module Mrbmacs
           'properties' => {},
           'required' => [],
           'additionalProperties' => false
-        }
+        },
+        'handler' => :list_commands_api
       }
     )
+  end
+
+  class Application
+    def list_commands_api(arguments)
+      raise ArgumentError unless arguments.empty?
+
+      commands = command_information
+      {
+        'commands' => commands,
+        'total_commands' => commands.length
+      }
+    end
   end
 end
 ```
@@ -68,7 +84,8 @@ module Mrbmacs
           },
           'required' => ['path'],
           'additionalProperties' => false
-        }
+        },
+        'handler' => :find_file_api
       }
     )
   end
@@ -86,7 +103,11 @@ The schema fields have the following meanings:
 - `additionalProperties: false` rejects argument names not declared in
   `properties`. This catches misspellings and prevents unsupported input from
   being silently accepted.
+- `handler` names the API-specific entry point. It may validate arguments and
+  return structured data without invoking the human-facing UI command.
 
-`describe_command` only records metadata; it does not expose or dispatch the
-command by itself. Consumers such as `mruby-mrbmacs-agent` decide how
-API-enabled commands are listed, validated, and invoked.
+`describe_command` records the schema and API handler together. A consumer such
+as `mruby-mrbmacs-agent` lists API-enabled commands from this metadata and
+dispatches a tool call to the declared handler. The human-facing command and
+the API handler may share a core helper while keeping their UI and structured
+result responsibilities separate.

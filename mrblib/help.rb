@@ -10,7 +10,8 @@ module Mrbmacs
           'properties' => {},
           'required' => [],
           'additionalProperties' => false
-        }
+        },
+        'handler' => :list_commands_api
       }
     )
 
@@ -40,6 +41,18 @@ module Mrbmacs
 
   # Application helpers for help commands
   class Application
+    def list_commands_api(arguments)
+      unless arguments.is_a?(Hash) && arguments.empty?
+        raise ArgumentError, 'list_commands does not accept arguments'
+      end
+
+      commands = command_information
+      {
+        'commands' => commands,
+        'total_commands' => commands.length
+      }
+    end
+
     def command_information
       @command_list.map do |command|
         metadata = Command.metadata[command.to_sym]
