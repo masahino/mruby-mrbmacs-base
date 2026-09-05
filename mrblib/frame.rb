@@ -30,6 +30,24 @@ module Mrbmacs
       @edit_win_list.each do |w|
         w.apply_theme(theme)
       end
+      apply_echo_theme(theme) unless @echo_win.nil?
+    end
+
+    # Style the echo/minibuffer window to match theme. Identical across
+    # every frontend; the prompt lives in an SC_MARGIN_TEXT margin filled
+    # with STYLE_LINENUMBER.back, so that style needs the same colours as
+    # STYLE_DEFAULT, and sci_style_clear_all resets it, hence reapplying
+    # both after. Terminal Scintilla bindings render to a character grid and
+    # need an explicit redraw to show the new colours; cocoa/gtk render
+    # asynchronously and never define `refresh` at all (see echo_set_prompt).
+    def apply_echo_theme(theme)
+      @echo_win.sci_style_set_fore(Scintilla::STYLE_DEFAULT, theme.foreground_color)
+      @echo_win.sci_style_set_back(Scintilla::STYLE_DEFAULT, theme.background_color)
+      @echo_win.sci_style_clear_all
+      @echo_win.sci_style_set_fore(Scintilla::STYLE_LINENUMBER, theme.foreground_color)
+      @echo_win.sci_style_set_back(Scintilla::STYLE_LINENUMBER, theme.background_color)
+      @echo_win.sci_set_caret_fore(theme.foreground_color)
+      @echo_win.refresh if @echo_win.respond_to?(:refresh)
     end
 
     def get_mode_str(app)

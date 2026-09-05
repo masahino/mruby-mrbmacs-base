@@ -20,4 +20,15 @@ assert('apply_theme') do
     ],
     frame.view_win.messages.last(8)
   )
+  assert_equal(
+    [
+      Scintilla::SCI_STYLESETFORE,
+      Scintilla::SCI_STYLESETBACK,
+      Scintilla::SCI_STYLECLEARALL,
+      Scintilla::SCI_STYLESETFORE,
+      Scintilla::SCI_STYLESETBACK,
+      Scintilla::SCI_SETCARETFORE
+    ],
+    frame.echo_win.messages.last(6)
+  )
 end
