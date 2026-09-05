@@ -28,5 +28,22 @@ module Mrbmacs
     def echo_puts(text)
       raise NotImplementedError
     end
+
+    # Prompt for a buffer name, offering the current buffer_list as
+    # tab-completion candidates filtered by prefix. Identical across every
+    # frontend; only echo_gets itself (blocking loop vs event-driven) and
+    # @echo_win differ per frontend.
+    def select_buffer(default_buffername, buffer_list)
+      prompt = "Switch to buffer: (default #{default_buffername}) "
+      echo_gets(prompt, '') do |input_text|
+        candidates = buffer_list.select do |name|
+          name[0, input_text.length] == input_text
+        end
+        [
+          candidates.join(@echo_win.sci_autoc_get_separator.chr),
+          input_text.length
+        ]
+      end
+    end
   end
 end
