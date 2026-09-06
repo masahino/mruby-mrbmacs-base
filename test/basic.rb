@@ -92,6 +92,40 @@ assert('sava-buffers-kill-terminal') do
   assert_nil(app.save_buffers_kill_terminal)
 end
 
+assert('prepare-to-exit stops when closing a buffer is cancelled') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.add_new_buffer(Mrbmacs::Buffer.new('/foo/bar/foo.rb'))
+  app.define_singleton_method(:process_buffer_close) do |_buffer, _allow_all|
+    :cancelled
+  end
+
+  assert_false app.prepare_to_exit
+end
+
+assert('prepare-to-exit discards all remaining normal buffers') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.add_new_buffer(Mrbmacs::Buffer.new('/foo/bar/foo.rb'))
+  app.add_new_buffer(Mrbmacs::Buffer.new('/foo/bar/bar.rb'))
+  app.add_new_buffer(Mrbmacs::Buffer.new('/foo/bar/baz.rb'))
+  closed = []
+  calls = 0
+  app.define_singleton_method(:process_buffer_close) do |_buffer, allow_all|
+    calls += 1
+    assert_true allow_all
+    :discard_all
+  end
+  app.define_singleton_method(:close_buffer) do |buffer|
+    closed << buffer.name
+    @buffer_list.delete(buffer)
+    :closed
+  end
+
+  assert_true app.prepare_to_exit
+  assert_equal 1, calls
+  assert_equal ['foo.rb', 'bar.rb', 'baz.rb'], closed
+  assert_equal ['*Messages*', '*scratch*'], app.buffer_list.map(&:name)
+end
+
 assert('clear-rectangle') do
   app = Mrbmacs::TestSupport::Application.new
   app.mark_pos = nil

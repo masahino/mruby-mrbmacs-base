@@ -114,7 +114,8 @@ module Mrbmacs
     describe_command :save_buffers_kill_terminal, 'Exit mrbmacs.'
 
     def save_buffers_kill_terminal
-      before_save_buffers_kill_terminal(self)
+      return :cancelled unless prepare_to_exit
+
       @frame.exit
       exit
     end
@@ -226,6 +227,38 @@ module Mrbmacs
 
     def get_current_pos
       @frame.view_win.sci_get_current_pos
+    end
+  end
+
+  class Application
+    def prepare_to_exit
+      return true if @exit_prepared
+
+      buffers = @buffer_list.select { |buffer| buffer.name !~ /^\*.*\*$/ }
+      discard_all = false
+
+      buffers.each do |buffer|
+        next unless @buffer_list.include?(buffer)
+
+        if discard_all
+          close_buffer(buffer)
+          next
+        end
+
+        result = process_buffer_close(buffer, true)
+        return false if result == :cancelled
+        next unless result == :discard_all
+
+        return false unless @frame.y_or_n(
+          'Discard changes in all remaining buffers and exit?'
+        )
+
+        close_buffer(buffer)
+        discard_all = true
+      end
+
+      before_save_buffers_kill_terminal(self)
+      @exit_prepared = true
     end
   end
 end

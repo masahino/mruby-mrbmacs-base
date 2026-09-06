@@ -94,24 +94,15 @@ module Mrbmacs
         return :cancelled
       end
 
-      switch_to_buffer(buffername) unless target_buffer.equal?(@current_buffer)
-      if @frame.view_win.sci_get_modify != 0
-        action = select_kill_buffer_action(target_buffer)
-        return :cancelled if action == :cancel
+      process_buffer_close(target_buffer)
+    end
 
-        if action == :save
-          begin
-            return :cancelled unless save_buffer
-          rescue StandardError => e
-            @logger.error e.to_s
-            message "Unable to save buffer #{buffername}"
-            return :cancelled
-          end
-        end
-      end
+  end
 
+  # Application
+  class Application
+    def close_buffer(target_buffer)
       target_wins = @frame.edit_win_list.select { |w| w.buffer == target_buffer }
-
       new_buffer = (@buffer_list - [target_buffer]).last
 
       target_wins.each do |win|
@@ -122,7 +113,6 @@ module Mrbmacs
       end
 
       @buffer_list.delete(target_buffer)
-
       @current_buffer = @frame.edit_win.buffer
       @frame.sync_tab(@current_buffer.name)
       @frame.modeline(self)
@@ -130,19 +120,41 @@ module Mrbmacs
       :closed
     end
 
-  end
+    def select_close_action(buffer, allow_discard_all = false)
+      choices = {
+        's' => :save,
+        'd' => :discard,
+        'c' => :cancel
+      }
+      choices['!'] = :discard_all if allow_discard_all
+      prompt = "Buffer #{buffer.name} modified: (s)ave, (d)iscard"
+      prompt += ", (!)discard all" if allow_discard_all
 
-  # Application
-  class Application
-    def select_kill_buffer_action(buffer)
       @frame.read_choice(
-        "Buffer #{buffer.name} modified: (s)ave, (d)iscard, (c)ancel ",
-        {
-          's' => :save,
-          'd' => :discard,
-          'c' => :cancel
-        }
+        "#{prompt}, (c)ancel ",
+        choices
       )
+    end
+
+    def process_buffer_close(buffer, allow_discard_all = false)
+      switch_to_buffer(buffer.name) unless buffer.equal?(@current_buffer)
+      return close_buffer(buffer) if @frame.view_win.sci_get_modify == 0
+
+      action = select_close_action(buffer, allow_discard_all)
+      return :cancelled if action == :cancel
+      return :discard_all if action == :discard_all
+
+      if action == :save
+        begin
+          return :cancelled unless save_buffer
+        rescue StandardError => e
+          @logger.error e.to_s
+          message "Unable to save buffer #{buffer.name}"
+          return :cancelled
+        end
+      end
+
+      close_buffer(buffer)
     end
 
     def update_buffer_mode(buffer)

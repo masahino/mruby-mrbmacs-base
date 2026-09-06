@@ -184,6 +184,19 @@ assert('discard and close a modified buffer') do
   assert_nil Mrbmacs.get_buffer_from_name(app.buffer_list, 'baz.rb')
 end
 
+assert('exit close action includes discard all') do
+  app = setup_buffers
+  app.frame.define_singleton_method(:read_choice) do |_prompt, choices|
+    assert_equal :save, choices['s']
+    assert_equal :discard, choices['d']
+    assert_equal :discard_all, choices['!']
+    assert_equal :cancel, choices['c']
+    :discard_all
+  end
+
+  assert_equal :discard_all, app.select_close_action(app.current_buffer, true)
+end
+
 assert('kill-buffer (not current_buffer)') do
   app = setup_buffers
   bufs = app.buffer_list.size
