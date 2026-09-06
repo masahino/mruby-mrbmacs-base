@@ -75,6 +75,10 @@ module Mrbmacs
         true
       end
 
+      def read_choice(_prompt, _choices)
+        :discard
+      end
+
       def modeline(app, win = @mode_win)
       end
 

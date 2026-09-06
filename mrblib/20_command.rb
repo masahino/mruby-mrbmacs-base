@@ -7,9 +7,23 @@ module Mrbmacs
       attr_reader :metadata
 
       def describe_command(name, description, api = nil)
+        normalized_api = nil
+        unless api.nil?
+          normalized_api = api.dup
+          input_schema = api['input_schema']
+          properties = input_schema.nil? ? {} : (input_schema['properties'] || {})
+          properties = properties.dup
+          normalized_api['input_schema'] = {
+            'type' => 'object',
+            'properties' => properties,
+            'required' => properties.keys,
+            'additionalProperties' => false
+          }
+        end
+
         @metadata[name.to_sym] = {
           'description' => description,
-          'api' => api
+          'api' => normalized_api
         }
       end
     end

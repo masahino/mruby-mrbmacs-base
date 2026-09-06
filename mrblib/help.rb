@@ -5,12 +5,6 @@ module Mrbmacs
       :list_commands,
       'List available editor commands.',
       {
-        'input_schema' => {
-          'type' => 'object',
-          'properties' => {},
-          'required' => [],
-          'additionalProperties' => false
-        },
         'handler' => :list_commands_api
       }
     )
@@ -29,12 +23,6 @@ module Mrbmacs
       :describe_bindings,
       'List the current key bindings.',
       {
-        'input_schema' => {
-          'type' => 'object',
-          'properties' => {},
-          'required' => [],
-          'additionalProperties' => false
-        },
         'handler' => :command_keybindings_api
       }
     )
