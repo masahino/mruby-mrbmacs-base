@@ -6,14 +6,24 @@ module Mrbmacs
   # keeps its own thin `y_or_n` that just calls this by name, rather than
   # letting method resolution pick a Frame-level override implicitly.
   class Frame
-    def y_or_n_terminal(prompt)
+    def read_choice_terminal(prompt, choices)
       $stderr.puts prompt if $DEBUG
       @echo_win.sci_clear_all
       echo_set_prompt(prompt)
-      _ret, key = waitkey(@echo_win)
-      key_str = strfkey(key)
+      loop do
+        _ret, key = waitkey(@echo_win)
+        key_str = strfkey(key)
+        return :cancel if key_str == 'C-g'
+
+        choice = choices[key_str.downcase]
+        return choice unless choice.nil?
+      end
+    ensure
       echo_set_prompt('')
-      key_str == 'Y' || key_str == 'y'
+    end
+
+    def y_or_n_terminal(prompt)
+      read_choice_terminal(prompt, { 'y' => true, 'n' => false }) == true
     end
   end
 end

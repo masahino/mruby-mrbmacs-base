@@ -136,15 +136,52 @@ assert('cancel killing a modified buffer displayed in a non-current window') do
   current_window = app.frame.edit_win
   current_buffer = app.current_buffer
   target_window.sci.test_return[Scintilla::SCI_GETMODIFY] = 1
-  app.frame.define_singleton_method(:y_or_n) { |_prompt| false }
+  current_window.sci.test_return[Scintilla::SCI_GETMODIFY] = 1
+  app.frame.define_singleton_method(:read_choice) do |_prompt, _choices|
+    :cancel
+  end
 
-  app.kill_buffer(target_buffer.name)
+  result = app.kill_buffer(target_buffer.name)
 
+  assert_equal :cancelled, result
   assert_equal(target_buffer, Mrbmacs.get_buffer_from_name(app.buffer_list, target_buffer.name))
+  assert_equal(target_buffer, app.current_buffer)
+  assert_equal(target_buffer, current_window.buffer)
   assert_equal(target_buffer, target_window.buffer)
-  assert_equal(current_window, app.frame.edit_win)
-  assert_equal(current_buffer, app.current_buffer)
-  assert_equal(current_buffer, current_window.buffer)
+end
+
+assert('save and close a modified buffer') do
+  app = setup_buffers
+  app.frame.view_win.test_return[Scintilla::SCI_GETMODIFY] = 1
+  saved = false
+  app.frame.define_singleton_method(:read_choice) do |_prompt, _choices|
+    :save
+  end
+  app.define_singleton_method(:save_buffer) do
+    saved = true
+  end
+
+  result = app.kill_buffer('baz.rb')
+
+  assert_true saved
+  assert_equal :closed, result
+  assert_nil Mrbmacs.get_buffer_from_name(app.buffer_list, 'baz.rb')
+end
+
+assert('discard and close a modified buffer') do
+  app = setup_buffers
+  app.frame.view_win.test_return[Scintilla::SCI_GETMODIFY] = 1
+  app.frame.define_singleton_method(:read_choice) do |_prompt, choices|
+    assert_equal :save, choices['s']
+    assert_equal :discard, choices['d']
+    assert_equal :cancel, choices['c']
+    :discard
+  end
+
+  result = app.kill_buffer('baz.rb')
+
+  assert_equal :closed, result
+  assert_nil Mrbmacs.get_buffer_from_name(app.buffer_list, 'baz.rb')
 end
 
 assert('kill-buffer (not current_buffer)') do

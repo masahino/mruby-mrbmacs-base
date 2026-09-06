@@ -69,6 +69,8 @@ module Mrbmacs
     describe_command :save_buffer, 'Save the current buffer to its file.'
 
     def save_buffer
+      return false if @current_buffer.filename.nil? || @current_buffer.filename.empty?
+
       all_text = @frame.view_win.sci_get_text(@frame.view_win.sci_get_length + 1)
       if @current_buffer.encoding != 'utf-8'
         all_text = Iconv.conv(@current_buffer.encoding, 'utf-8', all_text)
@@ -87,6 +89,7 @@ module Mrbmacs
       end
       vc_refresh_gutter
       after_save_buffer(self, @current_buffer.filename)
+      true
     end
 
     describe_command :write_file, 'Write the current buffer to a specified file.'
@@ -95,19 +98,20 @@ module Mrbmacs
       if filename.nil?
         filename = read_save_file_name('write file: ', @current_buffer.directory, @current_buffer.basename)
       end
-      return if filename.nil?
-      return if reject_directory_for_find_file(filename)
+      return false if filename.nil?
+      return false if reject_directory_for_find_file(filename)
 
       current = @current_buffer.filename.to_s
       if File.exist?(filename) &&
          (current.empty? || File.expand_path(filename) != File.expand_path(current))
-        return unless @frame.y_or_n("File `#{filename}' exists; overwrite? (y or n) ")
+        return false unless @frame.y_or_n("File `#{filename}' exists; overwrite? (y or n) ")
       end
 
       @current_buffer.update_filename(filename)
       save_buffer
       apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
       @frame.set_buffer_name(@current_buffer.name)
+      true
     end
 
   end

@@ -73,7 +73,7 @@ module Mrbmacs
     describe_command :kill_buffer, 'Kill a buffer.'
 
     def kill_buffer(buffername = nil)
-      return if @buffer_list.size <= 1
+      return :cancelled if @buffer_list.size <= 1
 
       if buffername.nil?
         echo_text = "kill-buffer (default #{@current_buffer.name}): "
@@ -86,19 +86,31 @@ module Mrbmacs
       # if buffer is modified
       if buffername =~ /^\*.*\*$/ # special buffer
         @logger.info "can't delete special buffer"
-        return
+        return :cancelled
       end
       target_buffer = Mrbmacs.get_buffer_from_name(@buffer_list, buffername)
       if target_buffer.nil?
         message 'no match'
-        return
+        return :cancelled
       end
-      target_wins = @frame.edit_win_list.select { |w| w.buffer == target_buffer }
 
-      if !target_wins.empty? && target_wins.first.sci.sci_get_modify != 0
-        ret = @frame.y_or_n("Buffer #{buffername} modified; kill anyway? (y or n) ")
-        return if ret == false
+      switch_to_buffer(buffername) unless target_buffer.equal?(@current_buffer)
+      if @frame.view_win.sci_get_modify != 0
+        action = select_kill_buffer_action(target_buffer)
+        return :cancelled if action == :cancel
+
+        if action == :save
+          begin
+            return :cancelled unless save_buffer
+          rescue StandardError => e
+            @logger.error e.to_s
+            message "Unable to save buffer #{buffername}"
+            return :cancelled
+          end
+        end
       end
+
+      target_wins = @frame.edit_win_list.select { |w| w.buffer == target_buffer }
 
       new_buffer = (@buffer_list - [target_buffer]).last
 
@@ -115,12 +127,24 @@ module Mrbmacs
       @frame.sync_tab(@current_buffer.name)
       @frame.modeline(self)
       after_kill_buffer(self, target_buffer)
+      :closed
     end
 
   end
 
   # Application
   class Application
+    def select_kill_buffer_action(buffer)
+      @frame.read_choice(
+        "Buffer #{buffer.name} modified: (s)ave, (d)iscard, (c)ancel ",
+        {
+          's' => :save,
+          'd' => :discard,
+          'c' => :cancel
+        }
+      )
+    end
+
     def update_buffer_mode(buffer)
       apply_theme_to_mode(buffer.mode, @frame.edit_win, @theme)
     end
