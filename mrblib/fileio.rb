@@ -71,25 +71,8 @@ module Mrbmacs
     def save_buffer
       return false if @current_buffer.filename.nil? || @current_buffer.filename.empty?
 
-      all_text = @frame.view_win.sci_get_text(@frame.view_win.sci_get_length + 1)
-      if @current_buffer.encoding != 'utf-8'
-        all_text = Iconv.conv(@current_buffer.encoding, 'utf-8', all_text)
-      end
-      #    $stderr.print all_text
-      #      File.open(app.filename, "w") do |f|
-      File.open(@current_buffer.filename, 'w') do |f|
-        f.write all_text
-      end
-      @frame.view_win.sci_set_save_point
-
-      if @config.use_builtin_syntax_check == true
-        @frame.view_win.sci_annotation_clearall
-        error = @current_buffer.mode.syntax_check(@frame.view_win)
-        @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
-      end
-      vc_refresh_gutter
-      after_save_buffer(self, @current_buffer.filename)
-      true
+      write_buffer_contents(@current_buffer.filename)
+      finish_buffer_save(@current_buffer.filename)
     end
 
     describe_command :write_file, 'Write the current buffer to a specified file.'
@@ -107,8 +90,10 @@ module Mrbmacs
         return false unless @frame.y_or_n("File `#{filename}' exists; overwrite? (y or n) ")
       end
 
+      filename = File.expand_path(filename)
+      write_buffer_contents(filename)
       @current_buffer.update_filename(filename)
-      save_buffer
+      finish_buffer_save(filename)
       apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
       @frame.set_buffer_name(@current_buffer.name)
       true
@@ -118,6 +103,26 @@ module Mrbmacs
 
   # Application
   class Application
+    def write_buffer_contents(filename)
+      text = @frame.view_win.sci_get_text(@frame.view_win.sci_get_length + 1)
+      if @current_buffer.encoding != 'utf-8'
+        text = Iconv.conv(@current_buffer.encoding, 'utf-8', text)
+      end
+      File.open(filename, 'w') { |file| file.write(text) }
+    end
+
+    def finish_buffer_save(filename)
+      @frame.view_win.sci_set_save_point
+      if @config.use_builtin_syntax_check == true
+        @frame.view_win.sci_annotation_clearall
+        error = @current_buffer.mode.syntax_check(@frame.view_win)
+        @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
+      end
+      vc_refresh_gutter
+      after_save_buffer(self, filename)
+      true
+    end
+
     def reject_directory_for_find_file(filename)
       return false unless File.directory?(filename)
 

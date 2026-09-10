@@ -40,6 +40,29 @@ assert('write-file') do
   assert_equal(File.basename(test_file), app.current_buffer.name)
 end
 
+assert('write-file keeps buffer identity when writing fails') do
+  app = Mrbmacs::TestSupport::Application.new
+  original = {
+    filename: app.current_buffer.filename,
+    name: app.current_buffer.name,
+    basename: app.current_buffer.basename,
+    directory: app.current_buffer.directory,
+    mode: app.current_buffer.mode,
+    vcinfo: app.current_buffer.vcinfo
+  }
+  app.define_singleton_method(:write_buffer_contents) do |_filename|
+    raise IOError, 'write failed'
+  end
+
+  assert_raise(IOError) { app.write_file('/new/path/example.rb') }
+  assert_equal original[:filename], app.current_buffer.filename
+  assert_equal original[:name], app.current_buffer.name
+  assert_equal original[:basename], app.current_buffer.basename
+  assert_equal original[:directory], app.current_buffer.directory
+  assert_equal original[:mode], app.current_buffer.mode
+  assert_equal original[:vcinfo], app.current_buffer.vcinfo
+end
+
 assert('write-file aborts when overwrite is declined') do
   app = Mrbmacs::TestSupport::Application.new
   app.frame.define_singleton_method(:y_or_n) { |_prompt| false }
