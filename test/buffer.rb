@@ -233,3 +233,34 @@ assert('buffer_list') do
   assert_equal 'foo.rb<bar>', app.buffer_list.last.name
   assert_equal 'foo.rb<foo/bar>', app.buffer_list[-2].name
 end
+
+assert('revert-buffer reloads the file into an ordinary buffer') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.update_filename("#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input")
+  win = app.frame.view_win
+  win.messages.clear
+  win.calls.clear
+
+  app.revert_buffer
+
+  assert_true win.messages.include?(Scintilla::SCI_CLEARALL)
+  # Read-only handling is reserved for *Messages*.
+  assert_equal 0, win.count_of(Scintilla::SCI_SETREADONLY)
+end
+
+assert('revert-buffer restores the read-only state of *Messages*') do
+  app = Mrbmacs::TestSupport::Application.new
+  buffer = Mrbmacs::Buffer.new('*Messages*')
+  buffer.filename = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
+  app.current_buffer = buffer
+  win = app.frame.view_win
+  win.messages.clear
+  win.calls.clear
+
+  app.revert_buffer
+
+  # Writable while reloading, read-only again afterwards.
+  assert_equal [[0], [1]], win.all_args(Scintilla::SCI_SETREADONLY)
+  assert_true win.messages.include?(Scintilla::SCI_DOCUMENTEND)
+  assert_true win.messages.include?(Scintilla::SCI_SETSAVEPOINT)
+end

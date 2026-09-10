@@ -22,8 +22,8 @@ module Mrbmacs
         @frame.view_win.sci_insert_text(start_of_line, @current_buffer.mode.start_of_comment)
         end_of_line = @frame.view_win.sci_get_line_end_position(line)
         @frame.view_win.sci_insert_text(end_of_line, @current_buffer.mode.end_of_comment)
-        @frame.view_win.sci_end_undo_action
       end
+      @frame.view_win.sci_end_undo_action
     end
 
     describe_command :uncomment_line, 'Uncomment the current line.'
@@ -46,6 +46,5 @@ module Mrbmacs
       end
       @frame.view_win.sci_end_undo_action
     end
-
   end
 end

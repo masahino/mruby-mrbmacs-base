@@ -188,3 +188,42 @@ assert('read_file_name marks directories relative to the listed directory') do
 ensure
   $test_echo_gets = old_echo_gets
 end
+
+# Points the current buffer at a writable file and stops save_buffer from
+# shelling out to git through vc_refresh_gutter.
+def setup_save_app(text, encoding = 'utf-8')
+  app = Mrbmacs::TestSupport::Application.new
+  app.define_singleton_method(:vc_refresh_gutter) {}
+  app.current_buffer.update_filename("#{File.dirname(__FILE__)}#{File::SEPARATOR}test.output")
+  app.current_buffer.encoding = encoding
+  win = app.frame.view_win
+  win.test_return[Scintilla::SCI_GETTEXT] = text
+  win.messages.clear
+  win.calls.clear
+  app
+end
+
+assert('save-buffer refuses a buffer that has no file') do
+  app = Mrbmacs::TestSupport::Application.new
+  # *scratch* is a special buffer, so Buffer#initialize leaves filename empty.
+  assert_equal('', app.current_buffer.filename)
+  assert_false(app.save_buffer)
+end
+
+assert('save-buffer writes the view contents and marks the buffer saved') do
+  app = setup_save_app("saved text\n")
+
+  assert_true(app.save_buffer)
+
+  assert_equal("saved text\n", File.read(app.current_buffer.filename))
+  assert_true(app.frame.view_win.messages.include?(Scintilla::SCI_SETSAVEPOINT))
+end
+
+assert('save-buffer converts the text to the buffer encoding') do
+  app = setup_save_app('あ', 'cp932')
+
+  app.save_buffer
+
+  # 'あ' is three bytes in UTF-8 and two in CP932.
+  assert_equal(Iconv.conv('cp932', 'utf-8', 'あ'), File.read(app.current_buffer.filename))
+end

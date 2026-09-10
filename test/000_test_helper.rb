@@ -425,16 +425,24 @@ module Scintilla
   module TestSupport
     # Scintilla class for test
     class Scintilla < ScintillaBase
-      attr_accessor :pos, :messages, :test_return
+      # @messages is the id-only history. It intentionally records the same
+      # messages it always has, so existing assertions that pop from it keep
+      # working.
+      # @calls additionally records the arguments of every message, including
+      # the string-returning handlers that never reached @messages. Use it to
+      # verify positions and byte lengths, which @messages cannot express.
+      attr_accessor :pos, :messages, :test_return, :calls
 
       def initialize
         @pos = 0
         @messages = []
         @test_return = {}
+        @calls = []
       end
 
       def send_message(id, *args)
         @messages.push id
+        @calls.push [id, args]
         if @test_return[id] != nil
           @test_return[id]
         else
@@ -442,16 +450,44 @@ module Scintilla
         end
       end
 
-      def send_message_get_text(_message, length)
-        send_message(::Scintilla::SCI_GETTEXT, [length])
+      # Arguments of the most recent call for +id+, or nil if never sent.
+      def last_args(id)
+        call = @calls.select { |c| c[0] == id }.last
+        call.nil? ? nil : call[1]
+      end
+
+      # Argument lists of every call for +id+, oldest first.
+      def all_args(id)
+        @calls.select { |c| c[0] == id }.collect { |c| c[1] }
+      end
+
+      # How many times +id+ was sent.
+      def count_of(id)
+        @calls.select { |c| c[0] == id }.size
       end
 
       def send_message_get_line(line)
         send_message(::Scintilla::SCI_GETLINE, [line])
       end
 
-      def send_message_get_text(_message, _wparam)
-        ''
+      # String-returning handlers. They are recorded in @calls only, so that
+      # @messages keeps the contents existing tests rely on.
+      def send_message_get_text(_message, length)
+        @calls.push [::Scintilla::SCI_GETTEXT, [length]]
+        text = @test_return[::Scintilla::SCI_GETTEXT]
+        text.nil? ? '' : text
+      end
+
+      def send_message_get_text_range(_message, cp_min, cp_max)
+        @calls.push [::Scintilla::SCI_GETTEXTRANGE, [cp_min, cp_max]]
+        text = @test_return[::Scintilla::SCI_GETTEXTRANGE]
+        text.nil? ? '' : text
+      end
+
+      def send_message_get_str(message, *args)
+        @calls.push [message, args]
+        text = @test_return[message]
+        text.nil? ? '' : text
       end
 
       def send_message_set_docpointer(id, wparam)

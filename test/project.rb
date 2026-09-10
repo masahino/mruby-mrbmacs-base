@@ -71,3 +71,22 @@ assert('grep executes in the current buffer directory') do
     ['*grep*', 'grep -n pattern', directory]
   ], app.shell_commands
 end
+
+assert('open-project moves the project root to an existing directory') do
+  app = Mrbmacs::TestSupport::Application.new
+  target = File.dirname(__FILE__)
+
+  app.open_project(target)
+
+  assert_equal File.expand_path(target), app.project.root_directory
+  assert_equal File.basename(target), app.project.name
+end
+
+assert('open-project ignores a directory that does not exist') do
+  app = Mrbmacs::TestSupport::Application.new
+  before = app.project.root_directory
+
+  app.open_project("#{File.dirname(__FILE__)}#{File::SEPARATOR}no_such_directory")
+
+  assert_equal before, app.project.root_directory
+end

@@ -86,3 +86,20 @@ assert('Preview Theme helper methods are not registered as commands') do
   assert_false commands.include?(:format_preview_color)
   assert_false commands.include?(:add_preview_text)
 end
+
+assert('preview-theme fills a dedicated buffer and reuses it') do
+  app = Mrbmacs::TestSupport::Application.new
+  win = app.frame.view_win
+  win.messages.clear
+
+  app.preview_theme
+
+  assert_include app.buffer_list.map { |buffer| buffer.name }, '*preview_theme*'
+  assert_true win.messages.include?(Scintilla::SCI_CLEARALL)
+  assert_true win.count_of(Scintilla::SCI_SETSTYLING) > 0
+
+  app.preview_theme
+
+  preview_buffers = app.buffer_list.select { |buffer| buffer.name == '*preview_theme*' }
+  assert_equal 1, preview_buffers.size
+end

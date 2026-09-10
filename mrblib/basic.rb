@@ -132,9 +132,9 @@ module Mrbmacs
     describe_command :clear_rectangle, 'Replace the selected rectangle with spaces.'
 
     def clear_rectangle
-      @frame.view_win.sci_set_selection_mode(1)
       return if @mark_pos.nil?
 
+      @frame.view_win.sci_set_selection_mode(1)
       @frame.view_win.sci_set_anchor(@mark_pos)
       anchor_x = @frame.view_win.sci_get_column(@mark_pos)
       anchor_y = @frame.view_win.sci_line_from_position(@mark_pos)
@@ -150,9 +150,9 @@ module Mrbmacs
     describe_command :delete_rectangle, 'Delete the selected rectangle.'
 
     def delete_rectangle
-      @frame.view_win.sci_set_selection_mode(1)
       return if @mark_pos.nil?
 
+      @frame.view_win.sci_set_selection_mode(1)
       @frame.view_win.sci_set_anchor(@mark_pos)
       @frame.view_win.sci_replace_sel(nil, '')
       @mark_pos = nil
@@ -168,13 +168,13 @@ module Mrbmacs
 
     def downcase_word
       current_pos = @frame.view_win.sci_get_current_pos
-      wordend_pos = @frame.view_win.sci_word_end_position(current_pos, true)
+      wordend_pos = word_end_pos(current_pos)
 
       return if wordend_pos <= current_pos
 
       word = @frame.view_win.sci_get_textrange(current_pos, wordend_pos)
-      @frame.view_win.sci_delete_range(current_pos, word.length)
-      @frame.view_win.sci_add_text(word.length, word.downcase)
+      @frame.view_win.sci_delete_range(current_pos, word.bytesize)
+      @frame.view_win.sci_add_text(word.bytesize, word.downcase)
     end
 
     describe_command :upcase_word, 'Convert the following word to uppercase.'
@@ -182,13 +182,13 @@ module Mrbmacs
     def upcase_word
       current_pos = @frame.view_win.sci_get_current_pos
       wordend_pos = word_end_pos(current_pos)
+
       return if wordend_pos <= current_pos
 
       word = @frame.view_win.sci_get_textrange(current_pos, wordend_pos)
-      @frame.view_win.sci_delete_range(current_pos, word.length)
-      @frame.view_win.sci_add_text(word.length, word.upcase)
+      @frame.view_win.sci_delete_range(current_pos, word.bytesize)
+      @frame.view_win.sci_add_text(word.bytesize, word.upcase)
     end
-
   end
 
   # Application

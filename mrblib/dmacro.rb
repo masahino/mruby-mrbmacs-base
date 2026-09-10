@@ -5,6 +5,8 @@ module Mrbmacs
 
     def dmacro_exec
       return if @recent_keys.length < 2
+
+      @dmacro_repeated_keys = []
       if @recent_keys[@recent_keys.length - 2] != 'C-t'
         @dmacro_repeated_keys = dmacro_find_rep(@recent_keys[0..@recent_keys.length - 2])
       end
@@ -24,12 +26,11 @@ module Mrbmacs
 
           extend(command)
         else
-          @frame.view_win.sci_add_text(key.length, key)
+          @frame.view_win.sci_add_text(key.bytesize, key)
         end
         prefix = ''
       end
     end
-
   end
 
   # Application

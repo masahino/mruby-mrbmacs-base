@@ -89,3 +89,56 @@ assert('describe_command normalizes properties without changing its input') do
 
   Mrbmacs::Command.metadata.delete(name)
 end
+
+# Answers the M-x prompt with +input+ and hands the completion block to +probe+.
+def stub_extended_command(app, input, &probe)
+  app.frame.define_singleton_method(:echo_gets) do |_prompt, _text = '', &block|
+    probe.call(block) unless probe.nil?
+    input
+  end
+  app.frame.view_win.messages.clear
+  app
+end
+
+assert('execute-extended-command runs the command that was typed') do
+  app = Mrbmacs::TestSupport::Application.new
+  stub_extended_command(app, 'beginning-of-buffer')
+
+  app.execute_extended_command
+
+  assert_equal Scintilla::SCI_DOCUMENTSTART, app.frame.view_win.messages.pop
+end
+
+assert('execute-extended-command passes arguments through to the command') do
+  app = Mrbmacs::TestSupport::Application.new
+  stub_extended_command(app, 'insert-file "no_such_file"')
+
+  app.execute_extended_command
+
+  assert_equal 'no match', app.frame.echo_message
+end
+
+assert('execute-extended-command does nothing when the prompt is cancelled') do
+  app = Mrbmacs::TestSupport::Application.new
+  stub_extended_command(app, nil)
+
+  app.execute_extended_command
+
+  assert_equal [], app.frame.view_win.messages
+end
+
+assert('execute-extended-command completes against the command list') do
+  app = Mrbmacs::TestSupport::Application.new
+  separator = app.frame.echo_win.sci_autoc_get_separator.chr
+  candidates = nil
+  length = nil
+  # The command list holds method names, so completion matches underscores.
+  stub_extended_command(app, nil) do |block|
+    candidates, length = block.call('beginning_of_')
+  end
+
+  app.execute_extended_command
+
+  assert_equal %w[beginning_of_buffer beginning_of_line].join(separator), candidates
+  assert_equal 13, length
+end

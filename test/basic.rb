@@ -34,6 +34,24 @@ assert('kill-line') do
   assert_equal(Scintilla::SCI_LINECUT, app.frame.view_win.messages.pop)
 end
 
+assert('yank') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.yank
+  assert_equal(Scintilla::SCI_PASTE, app.frame.view_win.messages.pop)
+end
+
+assert('beginning-of-line') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.beginning_of_line
+  assert_equal(Scintilla::SCI_HOME, app.frame.view_win.messages.pop)
+end
+
+assert('end-of-line') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.end_of_line
+  assert_equal(Scintilla::SCI_LINEEND, app.frame.view_win.messages.pop)
+end
+
 assert('beginning-of-buffer') do
   app = Mrbmacs::TestSupport::Application.new
   app.beginning_of_buffer
@@ -128,11 +146,97 @@ end
 
 assert('clear-rectangle') do
   app = Mrbmacs::TestSupport::Application.new
+
+  # Without a mark the command returns before touching the view.
   app.mark_pos = nil
+  app.frame.view_win.messages.clear
   app.clear_rectangle
-  assert_equal(Scintilla::SCI_SETSELECTIONMODE, app.frame.view_win.messages.pop)
+  assert_equal([], app.frame.view_win.messages)
+
+  # With a mark it replaces the rectangle and clears the mark.
   app.mark_pos = 1
   app.clear_rectangle
   assert_equal(Scintilla::SCI_REPLACERECTANGULAR, app.frame.view_win.messages.pop)
   assert_nil(app.mark_pos)
+end
+
+assert('delete-rectangle') do
+  app = Mrbmacs::TestSupport::Application.new
+
+  # Without a mark the command returns before touching the view.
+  app.mark_pos = nil
+  app.frame.view_win.messages.clear
+  app.delete_rectangle
+  assert_equal([], app.frame.view_win.messages)
+
+  # With a mark it deletes the rectangle and clears the mark.
+  app.mark_pos = 1
+  app.delete_rectangle
+  assert_equal(Scintilla::SCI_REPLACESEL, app.frame.view_win.messages.pop)
+  assert_nil(app.mark_pos)
+end
+
+assert('recenter') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.recenter
+  assert_equal(Scintilla::SCI_VERTICALCENTRECARET, app.frame.view_win.messages.pop)
+end
+
+# Places +word+ under point, ending at +word_end+, for the case commands.
+def setup_word_app(word, word_end)
+  app = Mrbmacs::TestSupport::Application.new
+  win = app.frame.view_win
+  win.test_return[Scintilla::SCI_GETCURRENTPOS] = 0
+  win.test_return[Scintilla::SCI_GETLENGTH] = 100
+  win.test_return[Scintilla::SCI_WORDENDPOSITION] = word_end
+  win.test_return[Scintilla::SCI_GETTEXTRANGE] = word
+  win.messages.clear
+  win.calls.clear
+  app
+end
+
+assert('downcase-word lowercases the word after point') do
+  app = setup_word_app('HELLO', 5)
+  win = app.frame.view_win
+
+  app.downcase_word
+
+  assert_equal([0, 5], win.last_args(Scintilla::SCI_GETTEXTRANGE))
+  assert_equal([0, 5], win.last_args(Scintilla::SCI_DELETERANGE))
+  assert_equal([5, 'hello'], win.last_args(Scintilla::SCI_ADDTEXT))
+end
+
+assert('upcase-word uppercases the word after point') do
+  app = setup_word_app('hello', 5)
+  win = app.frame.view_win
+
+  app.upcase_word
+
+  assert_equal([0, 5], win.last_args(Scintilla::SCI_GETTEXTRANGE))
+  assert_equal([0, 5], win.last_args(Scintilla::SCI_DELETERANGE))
+  assert_equal([5, 'HELLO'], win.last_args(Scintilla::SCI_ADDTEXT))
+end
+
+assert('word case commands measure the word in bytes') do
+  # Scintilla positions and lengths are byte based. With MRB_UTF8_STRING
+  # enabled 'あいう' is 3 characters but always 9 bytes, so the commands must
+  # report 9 here regardless of how the build counts characters.
+  app = setup_word_app('あいう', 9)
+  win = app.frame.view_win
+
+  app.downcase_word
+
+  assert_equal(9, win.last_args(Scintilla::SCI_DELETERANGE)[1])
+  assert_equal(9, win.last_args(Scintilla::SCI_ADDTEXT)[0])
+end
+
+assert('word case commands do nothing without a word after point') do
+  app = setup_word_app('', 0)
+  win = app.frame.view_win
+
+  app.downcase_word
+  app.upcase_word
+
+  assert_equal(0, win.count_of(Scintilla::SCI_DELETERANGE))
+  assert_equal(0, win.count_of(Scintilla::SCI_ADDTEXT))
 end
