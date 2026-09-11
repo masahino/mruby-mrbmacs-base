@@ -37,8 +37,8 @@ module Mrbmacs
         # at the same offsets, so the caller's completion arithmetic still
         # lines up whichever form was typed.
         typed = input_text.gsub('-', '_')
-        command_candidate = @command_list.select { |item| item.start_with?(typed) }
-                                         .map { |item| item.gsub('_', '-') }
+        command_candidate = command_list.select { |item| item.start_with?(typed) }
+                                        .map { |item| item.gsub('_', '-') }
         [command_candidate.join(@frame.echo_win.sci_autoc_get_separator.chr), input_text.length]
       end
       return if input_str.nil?

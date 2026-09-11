@@ -54,7 +54,7 @@ module Mrbmacs
     end
 
     def command_information
-      @command_list.map do |command|
+      command_list.map do |command|
         metadata = Command.metadata[command.to_sym]
         {
           'name' => command.tr('_', '-'),

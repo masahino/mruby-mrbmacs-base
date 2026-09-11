@@ -4,6 +4,15 @@ module Mrbmacs
     attr_accessor :frame, :current_buffer, :buffer_list, :theme,
                   :sci_handler, :ext, :config, :io_handler
     attr_reader :project
+    attr_writer :command_list
+
+    # Names of every command, for M-x completion and the help listing.
+    # Derived on demand so it is available before ~/.mrbmacsrc and -l scripts
+    # run, and so commands they define are included. Tests may still install a
+    # fixed list through @command_list.
+    def command_list
+      @command_list || Mrbmacs::Command.instance_methods.map(&:to_s).sort
+    end
 
     def initialize(argv = [])
       opts, argv = parse_args(argv)
@@ -23,7 +32,6 @@ module Mrbmacs
 
       find_file(argv[0]) if argv.size > 0
       load_file(opts[:load]) unless opts[:load].nil?
-      @command_list = Mrbmacs::Command.instance_methods.map(&:to_s).sort
     end
 
     def print_usage
@@ -32,7 +40,7 @@ module Mrbmacs
       puts '-l, --load FILE    load ruby file'
       puts '-d, --debug        set debugging flags (set $DEBUG to true)'
       puts '-h, --help         Prints this help'
-      puts '-v, --veresion     show version'
+      puts '-v, --version     show version'
     end
 
     def parse_args(argv)
