@@ -1,6 +1,13 @@
 module Mrbmacs
   # messages
   class Application
+    def refresh_messages_buffer
+      return unless @current_buffer.name == '*Messages*'
+      return if @current_buffer.filename.nil? || @current_buffer.filename == ''
+
+      revert_buffer
+    end
+
     def create_messages_buffer(logfile)
       find_file(logfile)
       @current_buffer.name = '*Messages*'
