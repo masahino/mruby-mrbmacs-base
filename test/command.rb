@@ -132,13 +132,26 @@ assert('execute-extended-command completes against the command list') do
   separator = app.frame.echo_win.sci_autoc_get_separator.chr
   candidates = nil
   length = nil
-  # The command list holds method names, so completion matches underscores.
   stub_extended_command(app, nil) do |block|
-    candidates, length = block.call('beginning_of_')
+    candidates, length = block.call('beginning-of-')
   end
 
   app.execute_extended_command
 
-  assert_equal %w[beginning_of_buffer beginning_of_line].join(separator), candidates
+  assert_equal %w[beginning-of-buffer beginning-of-line].join(separator), candidates
   assert_equal 13, length
+end
+
+assert('execute-extended-command completes an underscore spelling too') do
+  app = Mrbmacs::TestSupport::Application.new
+  separator = app.frame.echo_win.sci_autoc_get_separator.chr
+  candidates = nil
+  stub_extended_command(app, nil) do |block|
+    candidates, = block.call('beginning_of_')
+  end
+
+  app.execute_extended_command
+
+  # Either separator matches; candidates are always offered hyphenated.
+  assert_equal %w[beginning-of-buffer beginning-of-line].join(separator), candidates
 end

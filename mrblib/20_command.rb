@@ -32,7 +32,13 @@ module Mrbmacs
 
     def execute_extended_command
       input_str = @frame.echo_gets('M-x ') do |input_text|
-        command_candidate = @command_list.select { |item| item.start_with?(input_text) }
+        # Commands are named with underscores but are offered, and accepted,
+        # in the hyphenated form used by the help output. Both separators sit
+        # at the same offsets, so the caller's completion arithmetic still
+        # lines up whichever form was typed.
+        typed = input_text.gsub('-', '_')
+        command_candidate = @command_list.select { |item| item.start_with?(typed) }
+                                         .map { |item| item.gsub('_', '-') }
         [command_candidate.join(@frame.echo_win.sci_autoc_get_separator.chr), input_text.length]
       end
       return if input_str.nil?
