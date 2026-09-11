@@ -36,34 +36,50 @@ module Mrbmacs
 
     def find_file(filename = nil)
       filename = read_file_name('find file: ', @current_buffer.directory) if filename.nil?
-      return if filename.nil?
-      return if reject_directory_for_find_file(filename)
+      return false if filename.nil?
+      return false if reject_directory_for_find_file(filename)
 
-      if Mrbmacs.get_buffer_from_path(@buffer_list, filename).nil?
-        @current_buffer.pos = @frame.view_win.sci_get_current_pos
-        new_buffer = Buffer.new(filename)
-        unless @current_buffer.docpointer.nil?
-          @frame.view_win.sci_add_refdocument(@current_buffer.docpointer)
+      existing_buffer = Mrbmacs.get_buffer_from_path(@buffer_list, filename)
+      unless existing_buffer.nil?
+        switch_to_buffer(existing_buffer.name)
+        vc_refresh_gutter
+        after_find_file(self, filename)
+        return true
+      end
+
+      loaded_file = nil
+      if File.exist?(filename)
+        begin
+          loaded_file = read_file_contents(filename)
+        rescue StandardError => e
+          @logger.error e.to_s
+          message 'error load file'
+          return false
         end
-        @frame.view_win.sci_set_docpointer(nil)
-        new_buffer.docpointer = @frame.view_win.sci_get_docpointer
-        add_new_buffer(new_buffer)
-        @current_buffer = new_buffer
-        add_buffer_to_frame(@current_buffer)
-        open_file(filename)
-        apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
-        @frame.set_buffer_name(@current_buffer.name)
-        @frame.edit_win.buffer = @current_buffer
-        @frame.modeline(self)
-        if @config.use_builtin_syntax_check == true
-          error = @current_buffer.mode.syntax_check(@frame.view_win)
-          @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
-        end
-      else
-        switch_to_buffer(Mrbmacs.get_buffer_from_path(@buffer_list, filename).name)
+      end
+
+      @current_buffer.pos = @frame.view_win.sci_get_current_pos
+      new_buffer = Buffer.new(filename)
+      unless @current_buffer.docpointer.nil?
+        @frame.view_win.sci_add_refdocument(@current_buffer.docpointer)
+      end
+      @frame.view_win.sci_set_docpointer(nil)
+      new_buffer.docpointer = @frame.view_win.sci_get_docpointer
+      add_new_buffer(new_buffer)
+      @current_buffer = new_buffer
+      add_buffer_to_frame(@current_buffer)
+      open_file(filename, loaded_file)
+      apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
+      @frame.set_buffer_name(@current_buffer.name)
+      @frame.edit_win.buffer = @current_buffer
+      @frame.modeline(self)
+      if @config.use_builtin_syntax_check == true
+        error = @current_buffer.mode.syntax_check(@frame.view_win)
+        @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
       end
       vc_refresh_gutter
       after_find_file(self, filename)
+      true
     end
 
     describe_command :save_buffer, 'Save the current buffer to its file.'
@@ -220,6 +236,13 @@ module Mrbmacs
       file_encoding
     end
 
+    def read_file_contents(filename)
+      encoding = identify_file_encoding(filename)
+      content = File.read(filename, mode: 'rb')
+      content = Iconv.conv('utf-8', encoding, content) if encoding != 'utf-8'
+      [content, encoding]
+    end
+
     def insert_text_from_file(filename, from_encoding)
       pos = @frame.view_win.sci_get_current_pos
       content = File.read(filename, mode: 'rb')
@@ -243,30 +266,33 @@ module Mrbmacs
       @frame.view_win.sci_set_eolmode(eolmode)
     end
 
-    def open_file(filename)
-      unless File.exist?(filename)
+    def open_file(filename, loaded_file = nil)
+      if loaded_file.nil?
         message 'New file'
-        return
+        return true
       end
 
+      content, encoding = loaded_file
       view_win = @frame.view_win
+      mod_mask = view_win.sci_get_mod_event_mask
       begin
-        @current_buffer.encoding = identify_file_encoding(filename)
-
-        mod_mask = view_win.sci_get_mod_event_mask
         view_win.sci_set_mod_event_mask(0)
         view_win.sci_set_codepage(Scintilla::SC_CP_UTF8)
-        insert_text_from_file(filename, @current_buffer.encoding)
+        @current_buffer.encoding = encoding
+
+        pos = view_win.sci_get_current_pos
+        view_win.sci_add_text(content.bytesize, content)
+        view_win.sci_goto_pos(pos)
+
         identify_eolmode
         view_win.sci_set_savepoint
         view_win.sci_empty_undo_buffer
-        view_win.sci_set_mod_event_mask(mod_mask)
         view_win.sci_set_change_history(Scintilla::SC_CHANGE_HISTORY_ENABLED |
           Scintilla::SC_CHANGE_HISTORY_MARKERS)
-      rescue StandardError => e
-        @logger.error e.to_s
-        message 'error load file'
+      ensure
+        view_win.sci_set_mod_event_mask(mod_mask)
       end
+      true
     end
   end
 end

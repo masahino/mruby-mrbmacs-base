@@ -32,6 +32,60 @@ assert('find-file rejects directories before creating a buffer') do
   assert_equal 'Cannot open a directory', app.frame.echo_message
 end
 
+assert('find-file keeps the current buffer when reading fails') do
+  app = Mrbmacs::TestSupport::Application.new
+  current_buffer = app.current_buffer
+  buffers = app.buffer_list.dup
+  filename = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
+
+  app.define_singleton_method(:read_file_contents) do |_filename|
+    raise IOError, 'read failed'
+  end
+
+  assert_false app.find_file(filename)
+  assert_equal current_buffer, app.current_buffer
+  assert_equal buffers, app.buffer_list
+  assert_equal 'error load file', app.frame.echo_message
+  assert_nil Mrbmacs.get_buffer_from_path(app.buffer_list, filename)
+end
+
+assert('find-file does not run after-find-file after a read failure') do
+  app = Mrbmacs::TestSupport::Application.new
+  filename = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
+  after_find_file_called = false
+
+  app.define_singleton_method(:read_file_contents) do |_filename|
+    raise IOError, 'read failed'
+  end
+  app.add_command_event(:after_find_file) do |_application, _filename|
+    after_find_file_called = true
+  end
+
+  app.find_file(filename)
+
+  assert_false after_find_file_called
+end
+
+assert('open-file restores the modification event mask after an error') do
+  app = Mrbmacs::TestSupport::Application.new
+  view = app.frame.view_win
+  restored_masks = []
+
+  view.define_singleton_method(:sci_get_mod_event_mask) { 123 }
+  view.define_singleton_method(:sci_set_mod_event_mask) do |mask|
+    restored_masks << mask
+  end
+  view.define_singleton_method(:sci_add_text) do |_length, _text|
+    raise RuntimeError, 'Scintilla error'
+  end
+
+  assert_raise(RuntimeError) do
+    app.open_file('/existing/file', ['content', 'utf-8'])
+  end
+
+  assert_equal [0, 123], restored_masks
+end
+
 assert('write-file') do
   app = Mrbmacs::TestSupport::Application.new
   test_file = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.output"
