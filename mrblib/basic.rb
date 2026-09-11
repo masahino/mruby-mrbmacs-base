@@ -16,6 +16,7 @@ module Mrbmacs
       current_pos = win.sci_get_current_pos
 
       win.sci_copy_range(@mark_pos, current_pos)
+      remember_clipboard(win)
       win.sci_set_empty_selection(current_pos)
       @mark_pos = nil
     end
@@ -30,6 +31,7 @@ module Mrbmacs
 
       win.sci_goto_pos(current_pos)
       win.sci_copy_range(@mark_pos, current_pos)
+      remember_clipboard(win)
       win.sci_delete_range(@mark_pos, current_pos - @mark_pos)
       @mark_pos = nil
     end
@@ -54,7 +56,13 @@ module Mrbmacs
       else
         win.sci_line_cut
       end
+      remember_clipboard(win)
     end
+
+    def remember_clipboard(win)
+      @clipboard_text = win.get_clipboard if win.respond_to?(:get_clipboard)
+    end
+    private :remember_clipboard
 
     describe_command :indent, 'Indent the current line or complete the active candidate.'
 

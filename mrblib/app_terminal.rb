@@ -3,7 +3,7 @@ module Mrbmacs
   class ApplicationTerminal < Application
     def copy_region
       super
-      str = @frame.view_win.get_clipboard
+      str = @clipboard_text || ''
       if Scintilla::PLATFORM == :CURSES_WIN32
         IO.popen('clip.exe', 'r+') { |f| f << str }
       else
@@ -16,12 +16,14 @@ module Mrbmacs
     end
 
     def yank
-      if @frame.view_win.get_clipboard == ''
+      if @clipboard_text.nil? || @clipboard_text == ''
         `type pbpaste 2>/dev/null`
         if $?.exitstatus == 0
-          clipboard_text = `pbpaste`
-          @frame.view_win.sci_copytext(clipboard_text.bytesize, clipboard_text)
+          @clipboard_text = `pbpaste`
         end
+      end
+      unless @clipboard_text.nil? || @clipboard_text == ''
+        @frame.view_win.sci_copytext(@clipboard_text.bytesize, @clipboard_text)
       end
       @frame.view_win.sci_paste
     end

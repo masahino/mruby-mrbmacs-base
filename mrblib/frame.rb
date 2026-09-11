@@ -1,7 +1,8 @@
 module Mrbmacs
   # Base class of Frame
   class FrameBase
-    attr_accessor :view_win, :echo_win, :sci_notifications, :edit_win_list, :edit_win
+    attr_accessor :view_win, :echo_win, :sci_notifications, :edit_win_list, :edit_win,
+                  :application
 
     def init_keysyms
       @keysyms = [0,

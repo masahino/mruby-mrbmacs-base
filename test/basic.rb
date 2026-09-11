@@ -9,34 +9,42 @@ end
 
 assert('copy-region') do
   app = Mrbmacs::TestSupport::Application.new
+  app.frame.view_win.define_singleton_method(:get_clipboard) { 'copied text' }
   app.set_mark
   app.copy_region
   assert_equal(Scintilla::SCI_SETEMPTYSELECTION, app.frame.view_win.messages.pop)
   assert_equal(nil, app.mark_pos)
+  assert_equal('copied text', app.clipboard_text)
 end
 
 assert('cut-region') do
   app = Mrbmacs::TestSupport::Application.new
+  app.frame.view_win.define_singleton_method(:get_clipboard) { 'cut text' }
   app.cut_region
   assert_equal(nil, app.mark_pos)
   # cut all text
   app.set_mark
   app.cut_region
   assert_equal(nil, app.mark_pos)
+  assert_equal('cut text', app.clipboard_text)
 end
 
 assert('kill-line') do
   app = Mrbmacs::TestSupport::Application.new
+  app.frame.view_win.define_singleton_method(:get_clipboard) { 'killed text' }
   app.kill_line
   assert_equal(Scintilla::SCI_DELETERANGE, app.frame.view_win.messages.pop)
   app.frame.view_win.test_return[Scintilla::SCI_GETLINE] = "\n"
   app.kill_line
   assert_equal(Scintilla::SCI_LINECUT, app.frame.view_win.messages.pop)
+  assert_equal('killed text', app.clipboard_text)
 end
 
 assert('yank') do
   app = Mrbmacs::TestSupport::Application.new
+  app.clipboard_text = 'shared text'
   app.yank
+  assert_equal('shared text', app.clipboard_text)
   assert_equal(Scintilla::SCI_PASTE, app.frame.view_win.messages.pop)
 end
 

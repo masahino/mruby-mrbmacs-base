@@ -1,7 +1,7 @@
 module Mrbmacs
   # Application
   class Application
-    attr_accessor :frame, :current_buffer, :buffer_list, :theme,
+    attr_accessor :frame, :current_buffer, :buffer_list, :theme, :clipboard_text,
                   :sci_handler, :ext, :config, :io_handler
     attr_reader :project
     attr_writer :command_list
@@ -92,6 +92,7 @@ module Mrbmacs
       @io_handler = {}
       @sci_handler = {}
       @command_handler = {}
+      @clipboard_text = ''
       @ext = Extension.new
       @config = Config.new
       @theme = nil
@@ -110,6 +111,7 @@ module Mrbmacs
 
     def init_frame
       @frame = Mrbmacs::Frame.new(@current_buffer)
+      @frame.application = self if @frame.respond_to?(:application=)
       @frame.set_buffer_name(@current_buffer.name)
       @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
     end

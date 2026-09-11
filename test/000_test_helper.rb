@@ -26,6 +26,7 @@ module Mrbmacs
 
       def init_frame
         @frame = Mrbmacs::TestSupport::Frame.new(@current_buffer)
+        @frame.application = self
         @frame.set_buffer_name(@current_buffer.name)
         @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
       end
