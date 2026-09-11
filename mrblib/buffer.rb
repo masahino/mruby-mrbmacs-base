@@ -187,6 +187,7 @@ module Mrbmacs
       unless new_buffer.nil?
         @buffer_list.push(@buffer_list.delete(new_buffer))
         update_buffer_window(new_buffer)
+        refresh_messages_buffer
       end
     end
 
