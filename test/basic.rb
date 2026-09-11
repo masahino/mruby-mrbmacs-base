@@ -152,36 +152,182 @@ assert('prepare-to-exit discards all remaining normal buffers') do
   assert_equal ['*Messages*', '*scratch*'], app.buffer_list.map(&:name)
 end
 
-assert('clear-rectangle') do
+# A document backed stand-in for the edit view, used by the rectangle
+# commands. Those commands only ask Scintilla document based questions
+# (SCI_LINEFROMPOSITION / SCI_GETCOLUMN / SCI_FINDCOLUMN) and then edit by byte
+# range, so the whole contract can be modelled here and the commands checked by
+# the bytes they leave behind rather than by the order of messages.
+#
+# Columns count characters, as Scintilla does for double byte text. The
+# fixtures avoid tabs, which Scintilla would expand to the tab width.
+class RectangleTestDoc
+  attr_reader :text, :undo_actions, :empty_selections
+  attr_accessor :current_pos
+
+  def initialize(text)
+    @text = text
+    @current_pos = 0
+    @undo_actions = []
+    @empty_selections = []
+  end
+
+  def lines
+    @text.split("\n", -1)
+  end
+
+  def sci_get_current_pos
+    @current_pos
+  end
+
+  def sci_position_from_line(line)
+    parts = lines
+    pos = 0
+    line.times { |i| pos += parts[i].bytesize + 1 }
+    pos
+  end
+
+  def sci_line_from_position(pos)
+    parts = lines
+    line = 0
+    start = 0
+    while line < parts.size - 1
+      following = start + parts[line].bytesize + 1
+      break if pos < following
+
+      start = following
+      line += 1
+    end
+    line
+  end
+
+  def sci_get_column(pos)
+    start = sci_position_from_line(sci_line_from_position(pos))
+    @text.byteslice(start, pos - start).length
+  end
+
+  # Byte position of +column+ on +line+, clamped to the end of the line.
+  def sci_find_column(line, column)
+    text = lines[line].to_s
+    column = text.length if column > text.length
+    sci_position_from_line(line) + text[0, column].bytesize
+  end
+
+  def sci_delete_range(pos, length)
+    tail = @text.byteslice(pos + length, @text.bytesize - pos - length)
+    @text = @text.byteslice(0, pos) + tail.to_s
+  end
+
+  def sci_insert_text(pos, text)
+    tail = @text.byteslice(pos, @text.bytesize - pos)
+    @text = @text.byteslice(0, pos) + text + tail.to_s
+  end
+
+  def sci_begin_undo_action
+    @undo_actions.push :begin
+  end
+
+  def sci_end_undo_action
+    @undo_actions.push :end
+  end
+
+  def sci_set_empty_selection(pos)
+    @empty_selections.push pos
+    @current_pos = pos
+  end
+end
+
+# Application whose edit view is +text+, with the mark at +mark_pos+ and point
+# at +current_pos+.
+def setup_rectangle_app(text, mark_pos, current_pos)
   app = Mrbmacs::TestSupport::Application.new
+  doc = RectangleTestDoc.new(text)
+  doc.current_pos = current_pos
+  app.frame.view_win = doc
+  app.mark_pos = mark_pos
+  app
+end
 
-  # Without a mark the command returns before touching the view.
-  app.mark_pos = nil
-  app.frame.view_win.messages.clear
-  app.clear_rectangle
-  assert_equal([], app.frame.view_win.messages)
+assert('clear-rectangle blanks the marked columns on every line') do
+  # Mark at line 0 column 2, point at line 1 column 6.
+  app = setup_rectangle_app("Here is a sample file.\nIt has several lines.\n", 2, 29)
+  doc = app.frame.view_win
 
-  # With a mark it replaces the rectangle and clears the mark.
-  app.mark_pos = 1
   app.clear_rectangle
-  assert_equal(Scintilla::SCI_REPLACERECTANGULAR, app.frame.view_win.messages.pop)
+
+  assert_equal("He    s a sample file.\nIt     several lines.\n", doc.text)
   assert_nil(app.mark_pos)
 end
 
-assert('delete-rectangle') do
-  app = Mrbmacs::TestSupport::Application.new
+assert('delete-rectangle removes the marked columns on every line') do
+  app = setup_rectangle_app("Here is a sample file.\nIt has several lines.\n", 2, 29)
+  doc = app.frame.view_win
 
-  # Without a mark the command returns before touching the view.
-  app.mark_pos = nil
-  app.frame.view_win.messages.clear
   app.delete_rectangle
-  assert_equal([], app.frame.view_win.messages)
 
-  # With a mark it deletes the rectangle and clears the mark.
-  app.mark_pos = 1
-  app.delete_rectangle
-  assert_equal(Scintilla::SCI_REPLACESEL, app.frame.view_win.messages.pop)
+  assert_equal("Hes a sample file.\nIt several lines.\n", doc.text)
   assert_nil(app.mark_pos)
+end
+
+assert('rectangle commands accept a mark below point') do
+  # The same rectangle as above, marked from its bottom right corner.
+  app = setup_rectangle_app("Here is a sample file.\nIt has several lines.\n", 29, 2)
+  doc = app.frame.view_win
+
+  app.clear_rectangle
+
+  assert_equal("He    s a sample file.\nIt     several lines.\n", doc.text)
+end
+
+assert('rectangle commands measure columns in characters, not bytes') do
+  # Columns 1...3 of both lines. On the first line that is 6 bytes, on the
+  # second 2, so a byte based implementation would cut the wrong text.
+  app = setup_rectangle_app("あいうえお\nabcdefg\n", 3, 19)
+  doc = app.frame.view_win
+
+  app.clear_rectangle
+
+  assert_equal("あ  えお\na  defg\n", doc.text)
+end
+
+assert('delete-rectangle across multibyte text keeps the other columns') do
+  app = setup_rectangle_app("あいうえお\nabcdefg\n", 3, 19)
+  doc = app.frame.view_win
+
+  app.delete_rectangle
+
+  assert_equal("あえお\nadefg\n", doc.text)
+end
+
+assert('rectangle commands edit inside one undo action') do
+  app = setup_rectangle_app("Here is a sample file.\nIt has several lines.\n", 2, 29)
+  doc = app.frame.view_win
+
+  app.clear_rectangle
+
+  # One group for the whole rectangle, not one per line.
+  assert_equal(%i[begin end], doc.undo_actions)
+end
+
+assert('rectangle commands leave point at the top left corner') do
+  app = setup_rectangle_app("Here is a sample file.\nIt has several lines.\n", 2, 29)
+  doc = app.frame.view_win
+
+  app.clear_rectangle
+
+  assert_equal([2], doc.empty_selections)
+  assert_equal(2, doc.current_pos)
+end
+
+assert('rectangle commands do nothing without a mark') do
+  app = setup_rectangle_app("Here is a sample file.\nIt has several lines.\n", nil, 29)
+  doc = app.frame.view_win
+
+  app.clear_rectangle
+  app.delete_rectangle
+
+  assert_equal("Here is a sample file.\nIt has several lines.\n", doc.text)
+  assert_equal([], doc.undo_actions)
+  assert_equal([], doc.empty_selections)
 end
 
 assert('recenter') do

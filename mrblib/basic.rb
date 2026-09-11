@@ -142,17 +142,10 @@ module Mrbmacs
     def clear_rectangle
       return if @mark_pos.nil?
 
-      @frame.view_win.sci_set_selection_mode(1)
-      @frame.view_win.sci_set_anchor(@mark_pos)
-      anchor_x = @frame.view_win.sci_get_column(@mark_pos)
-      anchor_y = @frame.view_win.sci_line_from_position(@mark_pos)
-      current_x = @frame.view_win.sci_get_column(get_current_pos)
-      current_y = @frame.view_win.sci_line_from_position(get_current_pos)
-      width = (current_x - anchor_x).abs
-      lines = (current_y - anchor_y).abs + 1
-      replaced_text = Array.new(lines, ' ' * width).join("\n")
-      @frame.view_win.sci_replace_rectangular(replaced_text.length, replaced_text)
-      @mark_pos = nil
+      each_rectangle_line do |start_pos, end_pos, width|
+        @frame.view_win.sci_delete_range(start_pos, end_pos - start_pos)
+        @frame.view_win.sci_insert_text(start_pos, ' ' * width)
+      end
     end
 
     describe_command :delete_rectangle, 'Delete the selected rectangle.'
@@ -160,10 +153,9 @@ module Mrbmacs
     def delete_rectangle
       return if @mark_pos.nil?
 
-      @frame.view_win.sci_set_selection_mode(1)
-      @frame.view_win.sci_set_anchor(@mark_pos)
-      @frame.view_win.sci_replace_sel(nil, '')
-      @mark_pos = nil
+      each_rectangle_line do |start_pos, end_pos, _width|
+        @frame.view_win.sci_delete_range(start_pos, end_pos - start_pos)
+      end
     end
 
     describe_command :recenter, 'Center the current line in the window.'
@@ -235,6 +227,51 @@ module Mrbmacs
 
     def get_current_pos
       @frame.view_win.sci_get_current_pos
+    end
+
+    # The rectangle marked by @mark_pos and point, as
+    # [first_line, last_line, first_column, last_column].
+    def marked_rectangle
+      anchor_line, anchor_column = line_col_from_pos(@mark_pos)
+      caret_line, caret_column = line_col_from_pos(get_current_pos)
+      [anchor_line, caret_line].sort + [anchor_column, caret_column].sort
+    end
+
+    # The byte range of every line of the marked rectangle, bottom line first,
+    # together with the column width of the rectangle.
+    #
+    # The ranges come from SCI_FINDCOLUMN, which is document based. Scintilla's
+    # own rectangular selection is defined in screen X coordinates instead:
+    # both SCI_REPLACERECTANGULAR and SCI_SETRECTANGULARSELECTION* go through
+    # Editor::SetRectangularRange, so they need a laid out view and answer
+    # differently in every frontend.
+    #
+    # Bottom line first, so that editing one line cannot shift the byte
+    # positions of the lines still to come.
+    def rectangle_line_ranges
+      win = @frame.view_win
+      first_line, last_line, first_column, last_column = marked_rectangle
+      ranges = []
+      line = last_line
+      while line >= first_line
+        ranges.push [win.sci_find_column(line, first_column), win.sci_find_column(line, last_column)]
+        line -= 1
+      end
+      [ranges, last_column - first_column]
+    end
+
+    # Yields the byte range (start_pos, end_pos) and the column width of every
+    # line of the marked rectangle as a single undo action, then drops the mark
+    # and leaves point at the top left corner of the rectangle.
+    def each_rectangle_line
+      win = @frame.view_win
+      ranges, width = rectangle_line_ranges
+      top_left = ranges.last[0]
+      win.sci_begin_undo_action
+      ranges.each { |start_pos, end_pos| yield start_pos, end_pos, width }
+      win.sci_end_undo_action
+      win.sci_set_empty_selection(top_left)
+      @mark_pos = nil
     end
   end
 
