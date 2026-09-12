@@ -95,9 +95,11 @@ frontends. This is the single largest source of forked code.
 - **Terminal:** edit windows are rectangles addressed by `x1,y1,x2,y2`
   character cells. `split_window`, `enlarge_window`, etc. are coordinate
   arithmetic (`app_window.rb`, `FrameBase#enlarge_window`).
-- **Cocoa:** layout is a tree of native `NSSplitView`s (`SplitCocoa`,
-  `TabCocoa`); `FrameCocoa` overrides `switch_window` / `delete_window` /
-  `enlarge_window*` to manipulate native views.
+- **Cocoa / GTK:** the layout model is a frontend-independent tree of
+  `LayoutSplit` and `TabLayout` objects. `FrameCocoa` and `FrameGtk` keep the
+  native `NSSplitView` / `GtkPaned` objects in sync with that model and
+  override `switch_window` / `delete_window` / `enlarge_window*` where native
+  view operations are required.
 
 ### 3. Rendering model
 
