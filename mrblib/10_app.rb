@@ -40,7 +40,7 @@ module Mrbmacs
       puts '-l, --load FILE    load ruby file'
       puts '-d, --debug        set debugging flags (set $DEBUG to true)'
       puts '-h, --help         Prints this help'
-      puts '-v, --version     show version'
+      puts '-v, --version      show version'
     end
 
     def parse_args(argv)
