@@ -39,7 +39,7 @@ A usable language mode also needs file detection, a mode, and an appropriate
 
 | Language or format | File detection | mrbmacs mode | LexerProfile | Lexilla lexer | Status | Notes |
 |---|---|---|---|---|---|---|
-| Ruby | `.rb`, `.rake`, `Rakefile`, `.mrbmacsrc` | `RubyMode` | `RUBY_LEXER_PROFILE` | `ruby` | Supported / dedicated | Includes the mrbmacs configuration file. |
+| Ruby | `.rb`, `.rake`, `Rakefile`, `init.rb`, `.mrbmacs`, `.mrbmacsrc` | `RubyMode` | `RUBY_LEXER_PROFILE` | `ruby` | Supported / dedicated | Includes current and legacy mrbmacs startup filenames. |
 | C/C++ | `.c`, `.h`, `.cpp`, `.cxx` | `CppMode` | `CPP_LEXER_PROFILE` | `cpp` | Supported / dedicated | The `cpp` lexer is also shared by several other modes. |
 | Objective-C | `.m`, `.mm` | `ObjectivecMode` | `OBJECTIVEC_LEXER_PROFILE` | `cpp` | Supported / shared | Includes Objective-C keywords and common Foundation types. |
 | CSS | `.css` | `CssMode` | `CSS_LEXER_PROFILE` | `css` | Supported / dedicated | |

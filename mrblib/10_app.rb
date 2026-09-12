@@ -7,7 +7,7 @@ module Mrbmacs
     attr_writer :command_list
 
     # Names of every command, for M-x completion and the help listing.
-    # Derived on demand so it is available before ~/.mrbmacsrc and -l scripts
+    # Derived on demand so it is available before the init file and -l scripts
     # run, and so commands they define are included. Tests may still install a
     # fixed list through @command_list.
     def command_list
@@ -36,7 +36,7 @@ module Mrbmacs
 
     def print_usage
       puts "Usage: #{$0} [OPTION-OR-FILENAME]..."
-      puts '-q                 do not load ~/.mrbmacsrc'
+      puts '-q                 do not load the init file'
       puts '-l, --load FILE    load ruby file'
       puts '-d, --debug        set debugging flags (set $DEBUG to true)'
       puts '-h, --help         Prints this help'
@@ -72,10 +72,33 @@ module Mrbmacs
     end
 
     def load_init_file
-      homedir = Mrbmacs.homedir
-      init_filename = "#{homedir}/.mrbmacsrc"
-      @logger.debug 'load initfile'
+      init_filename = find_init_file
+      return if init_filename.nil?
+
+      @logger.debug "load init file: #{init_filename}"
       load_file(init_filename)
+    end
+
+    def init_file_candidates
+      homedir = Mrbmacs.homedir
+      default_filename = File.join(homedir, '.config', 'mrbmacs', 'init.rb')
+      candidates = []
+      xdg_config_home = ENV['XDG_CONFIG_HOME']
+      unless xdg_config_home.nil? || xdg_config_home.empty? ||
+             !File.absolute_path?(xdg_config_home)
+        candidates << File.join(xdg_config_home, 'mrbmacs', 'init.rb')
+      end
+      candidates << default_filename unless candidates.include?(default_filename)
+      candidates << File.join(homedir, '.mrbmacs')
+      candidates << File.join(homedir, '.mrbmacsrc')
+      candidates
+    end
+
+    def find_init_file
+      init_file_candidates.each do |filename|
+        return filename if File.file?(filename)
+      end
+      nil
     end
 
     def init_logfile

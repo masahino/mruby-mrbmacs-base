@@ -39,6 +39,8 @@ assert('get_mode_by_filename') do
   assert_equal('typescript', Mrbmacs::ModeManager.get_mode_by_filename('/foo/bar/app.ts'))
   assert_equal('make', Mrbmacs::ModeManager.get_mode_by_filename('Makefile'))
   assert_equal('ruby', Mrbmacs::ModeManager.get_mode_by_filename('Rakefile'))
+  assert_equal('ruby', Mrbmacs::ModeManager.get_mode_by_filename('.mrbmacs'))
+  assert_equal('ruby', Mrbmacs::ModeManager.get_mode_by_filename('.mrbmacsrc'))
   assert_equal('latex', Mrbmacs::ModeManager.get_mode_by_filename('test.tex'))
   assert_equal('lisp', Mrbmacs::ModeManager.get_mode_by_filename('.lisp'))
 end
