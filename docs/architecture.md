@@ -18,7 +18,7 @@ that the split does not have to be re-derived when planning a change.
 | `mruby-mrbmacs-lsp`, `mruby-mrbmacs-dap`, `mruby-mrbmacs-themes-*` | optional feature gems, toolkit-independent |
 | `mruby-scintilla-base` + `mruby-scintilla-{cocoa,gtk,curses,termbox}` | Scintilla bindings, one per toolkit |
 | `mruby-bin-mrbmacs-cocoa` | macOS / AppKit frontend |
-| `mruby-bin-mrbmacs-gtk` | GTK frontend (partial / work in progress) |
+| `mruby-bin-mrbmacs-gtk` | GTK frontend |
 | `mruby-bin-mrbmacs-curses` | terminal frontend, curses binding |
 | `mruby-bin-mrbmacs-termbox` | terminal frontend, termbox binding |
 
@@ -58,15 +58,15 @@ owns the loop).
   `ApplicationTerminal`; the two intermediate classes never meet.
 - `Frame < FrameBase` (`frame.rb`) — currently an empty class. The two
   terminal frontends and GTK reopen `Mrbmacs::Frame`; Cocoa subclasses
-  `FrameBase` directly. Treat `Frame` as "the frame terminal frontends
-  extend", not as shared logic.
+  `FrameBase` directly. Treat `Frame` as the compatibility frame extended by
+  those frontends, not as a separate logic tier.
 
 ### Frontend classes
 
 | Frontend | Application class | Frame | EditWindow |
 | --- | --- | --- | --- |
 | cocoa | `ApplicationCocoa < ApplicationGui` | `FrameCocoa < FrameBase` | `PaneCocoa < EditWindow` |
-| gtk | `ApplicationGtk < ApplicationGui` | reopens `Frame` | reopens base window |
+| gtk | `ApplicationGtk < ApplicationGui` | reopens `Frame` | `EditWindowGtk < EditWindow` |
 | curses | `ApplicationCurses < ApplicationTerminal` | reopens `Frame` | reopens `EditWindow` |
 | termbox | `ApplicationTermbox < ApplicationTerminal` | reopens `Frame` | `EditWindowTermbox < EditWindow` |
 
@@ -126,11 +126,11 @@ helper under `tools/`).
 | theme / style system | `theme*.rb`, `style_*.rb`, `window.rb` | — (see `style-system-design.md`) |
 | mode / lexer profiles | `mode*.rb`, `lexer_profile*.rb` | — |
 | mode-line string | `FrameBase#get_mode_str` | mode-line *placement* forked (`modeline` in every frontend Frame) |
-| window split / enlarge | `app_window.rb`, `FrameBase` (terminal) | Cocoa overrides for `NSSplitView` |
-| minibuffer (`echo_gets`, `echo_set_prompt`, `echo_puts`, `complete_echo_input`, `select_buffer`, `y_or_n`) | contract only (`FrameBase`, all `NotImplementedError`) | full re-implementation in `echo_win_termbox.rb`, `frame_curses.rb`, `frame_cocoa.rb`, `frame-gtk.rb` (GTK mirrors Cocoa: `SC_MARGIN_TEXT` prompt + nested `gtk_main` in `mrbmacs-echo.c`) |
+| window split / enlarge | `layout.rb` (`LayoutSplit`, `TabLayout`) for Cocoa/GTK; `app_window.rb`, `FrameBase` for terminal layouts | Cocoa and GTK synchronize the shared layout tree with `NSSplitView` and `GtkPaned` respectively |
+| minibuffer (`echo_gets`, `echo_set_prompt`, `echo_puts`, `select_buffer`, confirmation) | `echo_win.rb` shares prompt styling and buffer selection; `frame_terminal.rb` shares terminal confirmation | input waits and event delivery remain frontend-specific; Cocoa/GTK are callback-driven while Curses/Termbox block for input |
 | incremental search | `search_gui.rb` (`ApplicationGui`, event-driven, shared by cocoa+gtk) | `app_terminal.rb#isearch` (blocking loop, terminal only) |
 | query-replace | `replace_gui.rb` (`ApplicationGui`, event-driven, shared by cocoa+gtk) | `app_terminal.rb` (blocking loop, terminal only) |
-| clipboard | — | `app_terminal.rb` (shell out), Cocoa/GTK use toolkit |
+| clipboard | `Application#clipboard_text` shares copied text between panes and the echo area | terminal frontends may also use `pbcopy`/`pbpaste`/`clip.exe`; Cocoa/GTK integrate with their toolkit clipboard |
 
 ## Naming and structure caveats
 
@@ -166,8 +166,8 @@ Recorded here so the analysis is not repeated. None of these are scheduled.
    target, wrap, select" step out of both shapes remains a candidate (see
    `ApplicationGui#perform_isearch` vs `ApplicationTerminal#isearch`).
 2. **`complete_echo_input`** (candidate split, `common_prefix`, insert
-   suffix, `sci_autoc_show`) is duplicated in `frame_cocoa.rb`,
-   `frame-gtk.rb`, and `echo_win_termbox.rb`.
+   suffix, `sci_autoc_show`) is duplicated across frontend echo-area
+   implementations.
 3. **`echo_gets` loop skeleton** — could live in `FrameBase` if every
    frontend exposed a normalised `wait_echo_event` seam (Cocoa and GTK
    already do; terminal frontends inline key matching).

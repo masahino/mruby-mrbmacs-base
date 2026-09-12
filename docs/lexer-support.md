@@ -7,14 +7,14 @@ supported languages and file extensions is maintained in
 
 ## Reference version
 
-- Inventory date: 2026-08-12
-- Lexilla version: 5.5.2 (`version.txt`: `552`)
-- Lexilla version selected by `mruby-scintilla-base`: `lexilla_ver = '552'`
-- Registered Lexilla lexer modules: 133
+- Inventory date: 2026-09-12
+- Lexilla version: 5.5.3 (`version.txt`: `553`)
+- Lexilla version selected by `mruby-scintilla-base`: `lexilla_ver = '553'`
+- Registered Lexilla lexer modules: 139
 
 The Lexilla version is independent of the `mruby-scintilla-base` gem version.
 The inventory below is based on the lexer modules registered under
-`lexilla/lexers` in Lexilla 5.5.2.
+`lexilla/lexers` in Lexilla 5.5.3.
 
 ## Status definitions
 
@@ -28,7 +28,7 @@ The inventory below is based on the lexer modules registered under
   lexer, but needs language-specific keywords, properties, or style mapping.
 - **Dedicated-lexer candidate**: Lexilla provides a dedicated lexer, but
   mrbmacs does not currently expose it as a mode.
-- **No dedicated lexer**: Lexilla 5.5.2 has no lexer module dedicated to that
+- **No dedicated lexer**: Lexilla 5.5.3 has no lexer module dedicated to that
   language.
 
 Lexer availability alone does not mean that a language is usable in mrbmacs.
@@ -96,30 +96,31 @@ workflows. Their presence here is not a decision to implement them.
 | INI/properties | `.ini`, `.properties` | `props` | Dedicated-lexer candidate | Add a format-oriented mode/profile and file detection. |
 | JSON with comments / JSON5 | `.jsonc`, `.json5` | `json` | Shared-profile candidate | Validate lexer properties and syntax differences before adding detection. |
 
-## Lexilla 5.5.2 modules not exposed as mrbmacs language modes
+## Lexilla 5.5.3 modules not exposed as mrbmacs language modes
 
 After excluding the lexers used by the supported modes and the internal
-`null`, `errorlist`, and `escseq` modules, 110 registered lexer modules are not
+`null`, `errorlist`, and `escseq` modules, 115 registered lexer modules are not
 currently exposed as mrbmacs language modes:
 
 ```text
-a68k, abaqus, abl, ada, apdl, as, asciidoc, asm, asn1, asy, au3, ave, avs,
-baan, batch, bib, blitzbasic, bullant, caml, cil, clarion, clarionnocase,
-cmake, COBOL, coffeescript, conf, cppnocase, csound, d, dart, dataflex, DMAP,
-DMIS, edifact, eiffel, eiffelkw, escript, f77, fcST, flagship, forth, fortran,
-freebasic, fsharp, gdscript, gui4cli, hollywood, ihex, inno, julia, kix, kvirc,
-literatehaskell, lot, lout, matlab, maxima, metapost, mmixal, modula, mssql,
-mysql, nim, nimrod, nix, nncrontab, nsis, octave, opal, oscript, pascal,
-phpscript, PL/M, po, powerbasic, powerpro, powershell, props, ps, purebasic,
-raku, rebol, sas, scriptol, sinex, smalltalk, SML, sorcins, specman, spice,
-sql, srec, stata, TACL, tads3, TAL, tcl, tcmd, tehex, tex, toml, troff,
-txt2tags, vb, vbscript, verilog, vhdl, visualprolog, x12, zig
+COBOL, DMAP, DMIS, PL/M, SML, TACL, TAL, a68k, abaqus, abl, ada, apdl, as,
+asciidoc, asm, asn1, asy, au3, ave, avs, baan, batch, bib, blitzbasic,
+bullant, caml, cil, clarion, clarionnocase, cmake, coffeescript, conf,
+cppnocase, csound, d, dart, dataflex, ecl, edifact, eiffel, eiffelkw, erlang,
+escript, f77, fcST, flagship, forth, fortran, freebasic, fsharp, gap, gdscript,
+gui4cli, hollywood, ihex, inno, julia, kix, kvirc, literatehaskell, lot, lout,
+magiksf, matlab, maxima, metapost, mmixal, modula, mssql, mysql, nim, nimrod,
+nix, nncrontab, nsis, octave, opal, oscript, pascal, phpscript, po,
+powerbasic, powerpro, powershell, props, ps, purebasic, raku, rebol, registry,
+sas, scriptol, sinex, smalltalk, sorcins, specman, spice, sql, srec, stata,
+tads3, tcl, tcmd, tehex, tex, toml, troff, txt2tags, vb, vbscript, verilog,
+vhdl, visualprolog, x12, zig
 ```
 
 Some module names represent lexer variants or dialects rather than distinct
 languages. Conversely, languages such as Objective-C, TypeScript, and C# do
 not appear in this list because they use, or can use, the `cpp` lexer rather
-than dedicated lexer modules in Lexilla 5.5.2.
+than dedicated lexer modules in Lexilla 5.5.3.
 
 ## Updating this inventory
 
