@@ -11,9 +11,12 @@ assert('apply_theme') do
       Scintilla::SCI_INDICSETSTYLE,
       Scintilla::SCI_INDICSETFORE,
       Scintilla::SCI_INDICSETALPHA,
-      Scintilla::SCI_INDICSETOUTLINEALPHA
+      Scintilla::SCI_INDICSETOUTLINEALPHA,
+      Scintilla::SCI_CALLTIPSETBACK,
+      Scintilla::SCI_CALLTIPSETFORE,
+      Scintilla::SCI_CALLTIPSETFOREHLT
     ],
-    app.frame.view_win.messages.last(8)
+    app.frame.view_win.messages.last(11)
   )
 end
 

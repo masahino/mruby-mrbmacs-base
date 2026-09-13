@@ -39,6 +39,7 @@ module Mrbmacs
     def init_sci_default
       @sci.sci_set_caret_fore(0xffffff)
       @sci.sci_set_codepage(Scintilla::SC_CP_UTF8)
+      @sci.sci_set_mouse_dwell_time(1000)
       @sci.sci_set_mod_event_mask(Scintilla::SC_MOD_INSERTTEXT | Scintilla::SC_MOD_DELETETEXT)
       # @sci.sci_set_caret_style(Scintilla::CARETSTYLE_BLOCK_AFTER |
       # Scintilla::CARETSTYLE_OVERSTRIKE_BLOCK | 32 |
@@ -209,6 +210,20 @@ module Mrbmacs
       end
       @sci.sci_indic_set_alpha(SEARCH_INDICATOR, 60)
       @sci.sci_indic_set_outline_alpha(SEARCH_INDICATOR, 160)
+
+      calltip_background = if theme.font_color[:color_caret_line]
+                             theme.font_color[:color_caret_line][1]
+                           else
+                             theme.background_color
+                           end
+      @sci.sci_calltip_set_back(calltip_background)
+      @sci.sci_calltip_set_fore(theme.foreground_color)
+      calltip_highlight = if theme.font_color[:color_function_name]
+                            theme.font_color[:color_function_name][0]
+                          else
+                            theme.foreground_color
+                          end
+      @sci.sci_calltip_set_fore_hlt(calltip_highlight)
     end
 
     def apply_theme(theme)
