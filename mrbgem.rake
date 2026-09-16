@@ -20,5 +20,4 @@ MRuby::Gem::Specification.new('mruby-mrbmacs-base') do |spec|
   spec.add_dependency 'mruby-iconv'
 
   spec.add_dependency 'mruby-os', github: 'masahino/mruby-os'
-  spec.add_dependency 'mruby-process', mgem: 'mruby-process2'
 end

@@ -11,6 +11,34 @@ def recording_vc_runner(results, calls)
   end
 end
 
+assert('VC quotes git arguments for the POSIX shell') do
+  vcinfo = Mrbmacs::VC.new('.', vc_runner(['rev-parse', '--show-toplevel'] => ['', 128]))
+
+  assert_equal "'plain'", vcinfo.send(:shell_quote, 'plain')
+  assert_equal "'file name.rb'", vcinfo.send(:shell_quote, 'file name.rb')
+  assert_equal %q('file name'"'"'s $HOME;touch marker'),
+               vcinfo.send(:shell_quote, "file name's $HOME;touch marker")
+  assert_equal "''", vcinfo.send(:shell_quote, '')
+end
+
+assert('VC run_git returns output and exit status from IO.popen') do
+  vcinfo = Mrbmacs::VC.new('.', vc_runner(['rev-parse', '--show-toplevel'] => ['', 128]))
+
+  output, status = vcinfo.send(:run_git, '.', ['--version'])
+
+  assert_equal 0, status
+  assert_true output.start_with?('git version ')
+end
+
+assert('VC run_git captures git errors and a nonzero exit status') do
+  vcinfo = Mrbmacs::VC.new('.', vc_runner(['rev-parse', '--show-toplevel'] => ['', 128]))
+
+  output, status = vcinfo.send(:run_git, '.', ['diff', '--definitely-invalid-option'])
+
+  assert_true status != 0
+  assert_true output != ''
+end
+
 assert('VC managed repository') do
   runner = vc_runner(
     ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],

@@ -126,20 +126,19 @@ module Mrbmacs
     end
 
     def run_git(directory, arguments)
-      reader, writer = IO.pipe
-      pid = nil
+      command = "#{(['git'] + arguments).map { |argument| shell_quote(argument) }.join(' ')} 2>&1"
       Dir.chdir(directory) do
-        pid = Process.spawn('git', *arguments, out: writer.fileno, err: writer.fileno)
+        output = IO.popen(command, 'r') { |io| io.read }
+        status = $?
+        exitstatus = status.respond_to?(:exitstatus) ? status.exitstatus : status
+        [output, exitstatus]
       end
-      writer.close
-      output = reader.read
-      reader.close
-      Process.waitpid(pid)
-      [output, $?.exitstatus]
     rescue StandardError => e
-      writer.close unless writer.nil? || writer.closed?
-      reader.close unless reader.nil? || reader.closed?
       [e.to_s, 1]
+    end
+
+    def shell_quote(argument)
+      "'#{argument.to_s.gsub("'") { %q('"'"') }}'"
     end
   end
 
