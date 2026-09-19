@@ -20,6 +20,7 @@ module Mrbmacs
       @logger = init_logfile
       init_buffer
       init_frame
+      @frame.echo_win.sci_autoc_set_separator("\t".ord)
       init_keymap
 
       @project = Project.new(@current_buffer.directory)
