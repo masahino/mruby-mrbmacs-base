@@ -187,8 +187,8 @@ end
 
 assert('Mrbmacs::dir_glob 1') do
   file_list, len = Mrbmacs.dir_glob(File.dirname(__FILE__) + File::SEPARATOR)
-  n = `ls #{File.dirname(__FILE__)}`.split(/\R/).length
-  assert_equal(n, file_list.length)
+  expected = (Dir.entries(File.dirname(__FILE__)) - ['.', '..']).sort
+  assert_equal(expected, file_list)
   assert_equal(0, len)
 end
 
