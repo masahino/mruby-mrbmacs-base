@@ -1,8 +1,9 @@
 module Mrbmacs
   # Application class for terminal
   class ApplicationTerminal < Application
-    def copy_region
+    def remember_clipboard(_win)
       super
+
       str = @clipboard_text || ''
       if Scintilla::PLATFORM == :CURSES_WIN32
         IO.popen('clip.exe', 'r+') { |f| f << str }
