@@ -82,6 +82,7 @@ module Mrbmacs
         win.sci_document_end
       else
         win.sci_goto_pos(current_pos)
+        vc_refresh_gutter
       end
     end
 
