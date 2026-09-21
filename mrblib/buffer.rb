@@ -1,3 +1,4 @@
+# Provides buffer-related functionality for Mrbmacs.
 module Mrbmacs
   # Buffer class
   class Buffer
@@ -60,13 +61,27 @@ module Mrbmacs
     describe_command :revert_buffer, 'Reload the current buffer from its file.'
 
     def revert_buffer
-      @frame.view_win.sci_set_read_only(0) if @current_buffer.name == '*Messages*'
-      @frame.view_win.sci_clear_all
-      insert_file(@current_buffer.filename)
+      win = @frame.view_win
+      win.sci_set_read_only(0) if @current_buffer.name == '*Messages*'
+      current_pos = win.sci_get_current_pos
+
+      change_history = win.sci_get_change_history
+      win.sci_set_change_history(Scintilla::SC_CHANGE_HISTORY_DISABLED)
+
+      contents, encoding = read_file_contents(@current_buffer.filename)
+      win.sci_set_text(contents)
+      @current_buffer.encoding = encoding
+
+      win.sci_empty_undo_buffer
+      win.sci_set_savepoint
+
+      win.sci_set_change_history(change_history)
+
       if @current_buffer.name == '*Messages*'
-        @frame.view_win.sci_set_read_only(1)
-        @frame.view_win.sci_document_end
-        @frame.view_win.sci_set_savepoint
+        win.sci_set_read_only(1)
+        win.sci_document_end
+      else
+        win.sci_goto_pos(current_pos)
       end
     end
 
@@ -96,7 +111,6 @@ module Mrbmacs
 
       process_buffer_close(target_buffer)
     end
-
   end
 
   # Application
