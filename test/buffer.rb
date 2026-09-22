@@ -236,16 +236,39 @@ end
 
 assert('revert-buffer reloads the file into an ordinary buffer') do
   app = Mrbmacs::TestSupport::Application.new
-  app.current_buffer.update_filename("#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input")
+  filename = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
+  app.current_buffer.update_filename(filename)
   win = app.frame.view_win
   win.messages.clear
   win.calls.clear
+  win.test_return[Scintilla::SCI_GETCURRENTPOS] = 7
+  win.test_return[Scintilla::SCI_GETCHANGEHISTORY] = Scintilla::SC_CHANGE_HISTORY_ENABLED
+  gutter_refreshed = false
+  app.define_singleton_method(:vc_refresh_gutter) { gutter_refreshed = true }
 
   app.revert_buffer
 
-  assert_true win.messages.include?(Scintilla::SCI_CLEARALL)
+  assert_equal [0, File.read(filename, mode: 'rb')], win.last_args(Scintilla::SCI_SETTEXT)
+  assert_true win.messages.include?(Scintilla::SCI_EMPTYUNDOBUFFER)
+  assert_true win.messages.include?(Scintilla::SCI_SETSAVEPOINT)
+  assert_equal [7], win.last_args(Scintilla::SCI_GOTOPOS)
+  assert_equal [
+    [Scintilla::SC_CHANGE_HISTORY_DISABLED],
+    [Scintilla::SC_CHANGE_HISTORY_ENABLED]
+  ], win.all_args(Scintilla::SCI_SETCHANGEHISTORY)
   # Read-only handling is reserved for *Messages*.
   assert_equal 0, win.count_of(Scintilla::SCI_SETREADONLY)
+  assert_true gutter_refreshed
+end
+
+assert('revert-buffer rejects a buffer not visiting a file') do
+  app = Mrbmacs::TestSupport::Application.new
+  win = app.frame.view_win
+
+  app.revert_buffer
+
+  assert_equal 'Buffer is not visiting a file', app.frame.echo_message
+  assert_equal 0, win.count_of(Scintilla::SCI_SETTEXT)
 end
 
 assert('revert-buffer restores the read-only state of *Messages*') do

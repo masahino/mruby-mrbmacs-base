@@ -61,6 +61,11 @@ module Mrbmacs
     describe_command :revert_buffer, 'Reload the current buffer from its file.'
 
     def revert_buffer
+      if @current_buffer.filename == ''
+        message 'Buffer is not visiting a file'
+        return
+      end
+
       win = @frame.view_win
       win.sci_set_read_only(0) if @current_buffer.name == '*Messages*'
       current_pos = win.sci_get_current_pos
