@@ -4,7 +4,7 @@ module Mrbmacs
   class Buffer
     attr_accessor :filename, :directory, :basename,
                   :docpointer, :name, :encoding, :mode, :pos,
-                  :vcinfo, :additional_info
+                  :vcinfo, :additional_info, :mtime
 
     def initialize(filename = nil)
       @vcinfo = nil
@@ -24,6 +24,7 @@ module Mrbmacs
         update_filename(filename)
       end
       @encoding = 'utf-8'
+      @mtime = nil
       @docpointer = nil
       @pos = 0
       @additional_info = ''
@@ -73,9 +74,10 @@ module Mrbmacs
       change_history = win.sci_get_change_history
       win.sci_set_change_history(Scintilla::SC_CHANGE_HISTORY_DISABLED)
 
-      contents, encoding = read_file_contents(@current_buffer.filename)
+      contents, encoding, mtime = read_file_contents(@current_buffer.filename)
       win.sci_set_text(contents)
       @current_buffer.encoding = encoding
+      @current_buffer.mtime = mtime
 
       win.sci_empty_undo_buffer
       win.sci_set_savepoint

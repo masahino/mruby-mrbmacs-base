@@ -66,10 +66,33 @@ assert('find-file does not run after-find-file after a read failure') do
   assert_false after_find_file_called
 end
 
-assert('open-file restores the modification event mask after an error') do
+assert('read-file-contents returns the file mtime') do
+  app = Mrbmacs::TestSupport::Application.new
+  filename = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
+
+  content, encoding, mtime = app.read_file_contents(filename)
+
+  assert_equal File.read(filename, mode: 'rb'), content
+  assert_equal 'utf-8', encoding
+  expected_mtime = File.open(filename, 'rb') { |file| file.mtime }
+  assert_equal expected_mtime, mtime
+end
+
+assert('find-file records the file mtime in the buffer') do
+  app = Mrbmacs::TestSupport::Application.new
+  filename = "#{File.dirname(__FILE__)}#{File::SEPARATOR}test.input"
+  expected_mtime = File.open(filename, 'rb') { |file| file.mtime }
+
+  assert_true app.find_file(filename)
+  assert_equal expected_mtime, app.current_buffer.mtime
+end
+
+assert('load-file-into-current-buffer restores the modification event mask after an error') do
   app = Mrbmacs::TestSupport::Application.new
   view = app.frame.view_win
   restored_masks = []
+  original_mtime = Time.at(1000)
+  app.current_buffer.mtime = original_mtime
 
   view.define_singleton_method(:sci_get_mod_event_mask) { 123 }
   view.define_singleton_method(:sci_set_mod_event_mask) do |mask|
@@ -80,10 +103,11 @@ assert('open-file restores the modification event mask after an error') do
   end
 
   assert_raise(RuntimeError) do
-    app.open_file('/existing/file', ['content', 'utf-8'])
+    app.load_file_into_current_buffer(['content', 'utf-8', Time.at(2000)])
   end
 
   assert_equal [0, 123], restored_masks
+  assert_equal original_mtime, app.current_buffer.mtime
 end
 
 assert('write-file') do
@@ -92,6 +116,8 @@ assert('write-file') do
   app.write_file(test_file)
   assert_equal(File.expand_path(test_file), app.current_buffer.filename)
   assert_equal(File.basename(test_file), app.current_buffer.name)
+  expected_mtime = File.open(test_file, 'rb') { |file| file.mtime }
+  assert_equal expected_mtime, app.current_buffer.mtime
 end
 
 assert('write-file keeps buffer identity when writing fails') do

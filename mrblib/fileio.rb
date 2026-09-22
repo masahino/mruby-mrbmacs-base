@@ -68,7 +68,13 @@ module Mrbmacs
       add_new_buffer(new_buffer)
       @current_buffer = new_buffer
       add_buffer_to_frame(@current_buffer)
-      open_file(filename, loaded_file)
+
+      if loaded_file.nil?
+        message 'New file'
+      else
+        load_file_into_current_buffer(loaded_file)
+      end
+
       apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
       @frame.set_buffer_name(@current_buffer.name)
       @frame.edit_win.buffer = @current_buffer
@@ -128,7 +134,11 @@ module Mrbmacs
     end
 
     def finish_buffer_save(filename)
+      mtime = File.open(filename, 'r') { |f| f.mtime }
+      @current_buffer.mtime = mtime
+
       @frame.view_win.sci_set_save_point
+
       if @config.use_builtin_syntax_check == true
         @frame.view_win.sci_annotation_clearall
         error = @current_buffer.mode.syntax_check(@frame.view_win)
@@ -238,9 +248,14 @@ module Mrbmacs
 
     def read_file_contents(filename)
       encoding = identify_file_encoding(filename)
-      content = File.read(filename, mode: 'rb')
+      content = nil
+      mtime = nil
+      File.open(filename, 'rb') do |file|
+        content = file.read
+        mtime = file.mtime
+      end
       content = Iconv.conv('utf-8', encoding, content) if encoding != 'utf-8'
-      [content, encoding]
+      [content, encoding, mtime]
     end
 
     def insert_text_from_file(filename, from_encoding)
@@ -266,19 +281,13 @@ module Mrbmacs
       @frame.view_win.sci_set_eolmode(eolmode)
     end
 
-    def open_file(filename, loaded_file = nil)
-      if loaded_file.nil?
-        message 'New file'
-        return true
-      end
-
-      content, encoding = loaded_file
+    def load_file_into_current_buffer(loaded_file = nil)
+      content, encoding, mtime = loaded_file
       view_win = @frame.view_win
       mod_mask = view_win.sci_get_mod_event_mask
       begin
         view_win.sci_set_mod_event_mask(0)
         view_win.sci_set_codepage(Scintilla::SC_CP_UTF8)
-        @current_buffer.encoding = encoding
 
         pos = view_win.sci_get_current_pos
         view_win.sci_add_text(content.bytesize, content)
@@ -289,6 +298,9 @@ module Mrbmacs
         view_win.sci_empty_undo_buffer
         view_win.sci_set_change_history(Scintilla::SC_CHANGE_HISTORY_ENABLED |
           Scintilla::SC_CHANGE_HISTORY_MARKERS)
+
+        @current_buffer.encoding = encoding
+        @current_buffer.mtime = mtime
       ensure
         view_win.sci_set_mod_event_mask(mod_mask)
       end

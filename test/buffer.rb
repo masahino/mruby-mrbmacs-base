@@ -13,6 +13,7 @@ end
 assert('Buffer.new') do
   buffer = Mrbmacs::Buffer.new
   assert_kind_of(Mrbmacs::Buffer, buffer)
+  assert_nil buffer.mtime
 end
 
 assert('Buffer.new uses Mode.instance by default') do
@@ -259,6 +260,21 @@ assert('revert-buffer reloads the file into an ordinary buffer') do
   # Read-only handling is reserved for *Messages*.
   assert_equal 0, win.count_of(Scintilla::SCI_SETREADONLY)
   assert_true gutter_refreshed
+  expected_mtime = File.open(filename, 'rb') { |file| file.mtime }
+  assert_equal expected_mtime, app.current_buffer.mtime
+end
+
+assert('revert-buffer preserves mtime when reading fails') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.update_filename('/test/example.rb')
+  original_mtime = Time.at(1000)
+  app.current_buffer.mtime = original_mtime
+  app.define_singleton_method(:read_file_contents) do |_filename|
+    raise IOError, 'read failed'
+  end
+
+  assert_raise(IOError) { app.revert_buffer }
+  assert_equal original_mtime, app.current_buffer.mtime
 end
 
 assert('revert-buffer rejects a buffer not visiting a file') do
