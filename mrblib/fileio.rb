@@ -79,10 +79,6 @@ module Mrbmacs
       @frame.set_buffer_name(@current_buffer.name)
       @frame.edit_win.buffer = @current_buffer
       @frame.modeline(self)
-      if @config.use_builtin_syntax_check == true
-        error = @current_buffer.mode.syntax_check(@frame.view_win)
-        @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
-      end
       vc_refresh_gutter
       after_find_file(self, filename)
       true
@@ -139,11 +135,6 @@ module Mrbmacs
 
       @frame.view_win.sci_set_save_point
 
-      if @config.use_builtin_syntax_check == true
-        @frame.view_win.sci_annotation_clearall
-        error = @current_buffer.mode.syntax_check(@frame.view_win)
-        @frame.show_annotation(error[0], error[1], error[2]) if error.size > 0
-      end
       vc_refresh_gutter
       after_save_buffer(self, filename)
       true

@@ -297,19 +297,3 @@ assert('profile identity follows the mrbmacs language mode') do
   assert_equal :latex, Mrbmacs::TEX_LEXER_PROFILE.name
   assert_equal 'latex', Mrbmacs::TEX_LEXER_PROFILE.lexer
 end
-
-assert('profile keyword set 0 remains the completion fallback') do
-  assert_true Mrbmacs::CppMode.new.completion_keyword_list.include?('constexpr')
-  assert_true Mrbmacs::GoMode.new.completion_keyword_list.include?('func')
-  assert_true Mrbmacs::JavaMode.new.completion_keyword_list.include?('interface')
-  assert_true Mrbmacs::JavascriptMode.new.completion_keyword_list.include?('function')
-  assert_true Mrbmacs::ObjectivecMode.new.completion_keyword_list.include?('@interface')
-  assert_true Mrbmacs::TypescriptMode.new.completion_keyword_list.include?('interface')
-  assert_false Mrbmacs::TypescriptMode.new.completion_keyword_list.include?('constexpr')
-  assert_false Mrbmacs::JavaMode.new.completion_keyword_list.include?('constexpr')
-  assert_false Mrbmacs::JavascriptMode.new.completion_keyword_list.include?('constexpr')
-  assert_equal '', Mrbmacs::HtmlMode.new.completion_keyword_list
-  assert_equal '', Mrbmacs::XmlMode.new.completion_keyword_list
-  assert_true Mrbmacs::PerlMode.new.completion_keyword_list.include?('sub')
-  assert_equal '', Mrbmacs::JsonMode.new.completion_keyword_list
-end

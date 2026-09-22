@@ -11,9 +11,5 @@ module Mrbmacs
     def end_of_block?(line)
       line =~ %r{^\s*</.*>\s*$} ? true : false
     end
-
-    def completion_keyword_list
-      ''
-    end
   end
 end

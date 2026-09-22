@@ -37,7 +37,7 @@ Editor state is organised into three classes, all in `mruby-mrbmacs-base`:
 | `EditWindow` | `window.rb` | one Scintilla view + its buffer: margins, markers, theme styling, mode settings |
 
 Most feature code is added to `Application` by **reopening** it from many
-files (`basic.rb`, `fileio.rb`, `buffer.rb`, `20_command.rb`, `completion.rb`,
+files (`basic.rb`, `fileio.rb`, `buffer.rb`, `20_command.rb`,
 `event.rb`, `sci_event.rb`, `app_keybind.rb`, …). Commands are instance
 methods on `Application` or on the `Command` module mixed into it.
 

@@ -12,12 +12,6 @@ module Mrbmacs
   # methods
   class Application
     def init_default_sci_event
-      if @config.use_builtin_completion
-        add_sci_event(Scintilla::SCN_CHARADDED) do |_app, scn|
-          builtin_completion(scn)
-        end
-      end
-
       add_sci_event(Scintilla::SCN_UPDATEUI) do |_app, scn|
         brace_highlight(scn)
         display_selection_range(scn)

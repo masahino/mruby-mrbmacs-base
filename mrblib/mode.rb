@@ -32,10 +32,6 @@ module Mrbmacs
       @lexer_profile.lexer
     end
 
-    def completion_keyword_list
-      @lexer_profile.keyword_sets[0] || ''
-    end
-
     def apply_theme(view_win, theme, overrides = nil)
       StyleResolver.new(theme, overrides).apply(view_win, @lexer_profile)
     end
@@ -58,28 +54,6 @@ module Mrbmacs
 
     def get_indent(view_win)
       view_win.sci_get_indent * get_indent_level(view_win)
-    end
-
-    def syntax_check(_view_win)
-      []
-    end
-
-    def get_candidates(_input)
-      completion_keyword_list.tr(' ', @frame.echo_win.sci.autoc_get_separator.chr)
-    end
-
-    def get_completion_list(view_win)
-      pos = view_win.sci_get_current_pos
-      col = view_win.sci_get_column(pos)
-      return [0, []] if col <= 0
-
-      line = view_win.sci_line_from_position(pos)
-      line_text = view_win.sci_get_line(line).chomp[0..col]
-      input = line_text.split(' ').pop
-      return [0, []] if input.nil? || input.length <= 0
-
-      candidates = get_candidates(input)
-      [input.length, candidates]
     end
 
     def add_keybind(key_str, command)
