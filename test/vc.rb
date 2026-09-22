@@ -11,6 +11,19 @@ def recording_vc_runner(results, calls)
   end
 end
 
+def vc_command_app(diff, diff_status = 0)
+  runner = vc_runner(
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['diff', '--no-ext-diff', '--unified=0', 'HEAD', '--', 'lib/file.rb'] => [diff, diff_status]
+  )
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.filename = '/work/project/lib/file.rb'
+  app.current_buffer.directory = '/work/project/lib'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project/lib', runner)
+  app
+end
+
 assert('VC quotes git arguments for the POSIX shell') do
   vcinfo = Mrbmacs::VC.new('.', vc_runner(['rev-parse', '--show-toplevel'] => ['', 128]))
 
@@ -263,4 +276,76 @@ assert('vc_refresh_gutter replaces VC markers') do
 
   assert_equal 3, messages.count { |message| message == Scintilla::SCI_MARKERDELETEALL } - before_delete
   assert_equal 4, messages.count { |message| message == Scintilla::SCI_MARKERADD } - before_add
+end
+
+assert('vc_next_change moves to the next hunk and wraps') do
+  diff = <<~DIFF
+    @@ -3 +3 @@
+    @@ -8 +8 @@
+    @@ -15,2 +15,0 @@
+  DIFF
+  app = vc_command_app(diff)
+  win = app.frame.view_win
+  win.test_return[Scintilla::SCI_GETCURRENTPOS] = 20
+  win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 4
+
+  app.vc_next_change
+
+  assert_equal [7], win.last_args(Scintilla::SCI_GOTOLINE)
+
+  win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 14
+  app.vc_next_change
+
+  assert_equal [2], win.last_args(Scintilla::SCI_GOTOLINE)
+end
+
+assert('vc_previous_change moves to the previous hunk and wraps') do
+  diff = <<~DIFF
+    @@ -3 +3 @@
+    @@ -8 +8 @@
+    @@ -15,2 +15,0 @@
+  DIFF
+  app = vc_command_app(diff)
+  win = app.frame.view_win
+  win.test_return[Scintilla::SCI_GETCURRENTPOS] = 20
+  win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 7
+
+  app.vc_previous_change
+
+  assert_equal [2], win.last_args(Scintilla::SCI_GOTOLINE)
+
+  win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 2
+  app.vc_previous_change
+
+  assert_equal [14], win.last_args(Scintilla::SCI_GOTOLINE)
+end
+
+assert('vc_next_change reports when the file has no changes') do
+  app = vc_command_app('')
+
+  app.vc_next_change
+
+  assert_equal 'No VC changes', app.frame.echo_message
+end
+
+assert('vc_next_change reports a git diff failure') do
+  app = vc_command_app('', 128)
+
+  app.vc_next_change
+
+  assert_equal 'Git diff failed', app.frame.echo_message
+end
+
+assert('vc_next_change rejects a file not managed by Git') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.filename = '/work/file.rb'
+  app.current_buffer.directory = '/work'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new(
+    '/work',
+    vc_runner(['rev-parse', '--show-toplevel'] => ['', 128])
+  )
+
+  app.vc_next_change
+
+  assert_equal 'File is not in a Git repository', app.frame.echo_message
 end

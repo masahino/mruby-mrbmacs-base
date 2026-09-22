@@ -171,6 +171,39 @@ module Mrbmacs
       end
     end
 
+    def vc_move_change(direction)
+      win = @frame.view_win
+      current_line = win.sci_line_from_position(win.sci_get_current_pos)
+
+      return if @current_buffer.filename == ''
+
+      vcinfo = @current_buffer.vcinfo || VC.new(@current_buffer.directory)
+      unless vcinfo.managed?
+        message 'File is not in a Git repository'
+        return
+      end
+
+      changes, status = vcinfo.changes(@current_buffer.filename)
+      unless status == 0
+        message 'Git diff failed'
+        return
+      end
+
+      if changes.empty?
+        message 'No VC changes'
+        return
+      end
+
+      lines = changes.map { |change| [change[:new_start] - 1, 0].max }
+
+      line = if direction == :next
+               lines.find { |l| l > current_line } || lines.first
+             else
+               lines.reverse.find { |l| l < current_line } || lines.last
+             end
+
+      win.sci_goto_line(line)
+    end
   end
 
   module Command
@@ -209,5 +242,14 @@ module Mrbmacs
       @frame.view_win.sci_set_read_only(1)
     end
 
+    describe_command :vc_next_change, 'Go to next change'
+    def vc_next_change
+      vc_move_change(:next)
+    end
+
+    describe_command :vc_previous_change, 'Go to previous change'
+    def vc_previous_change
+      vc_move_change(:previous)
+    end
   end
 end
