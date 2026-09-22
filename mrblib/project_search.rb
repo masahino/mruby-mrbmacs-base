@@ -1,5 +1,5 @@
 module Mrbmacs
-  PROJECT_SEARCH_EXCLUDED_DIRECTORIES = ['.git', 'build', 'tmp', 'node_modules'].freeze
+  PROJECT_SEARCH_EXCLUDED_DIRECTORIES = ['.git', '.ccls-cache', 'build', 'tmp', 'node_modules'].freeze
 
   def self.search_project_core(query, root_directory, stats = nil)
     results = []
