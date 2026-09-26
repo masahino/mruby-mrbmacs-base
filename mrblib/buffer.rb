@@ -106,8 +106,8 @@ module Mrbmacs
         end
       end
       buffername = @current_buffer.name if buffername == ''
-      # if buffer is modified
-      if buffername =~ /^\*.*\*$/ # special buffer
+
+      if buffername == '*scratch*' || buffername == '*Messages*'
         @logger.info "can't delete special buffer"
         return :cancelled
       end
