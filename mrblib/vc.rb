@@ -91,6 +91,48 @@ module Mrbmacs
       [self.class.parse_diff_hunks(output), 0]
     end
 
+    def stage(filename)
+      return ['', 1] unless managed?
+
+      relative_path, error = repository_relative_path(filename)
+      return [error, 1] unless error.nil?
+
+      execute(['add', '--', relative_path], @root_directory)
+    end
+
+    def status
+      return ['', 1] unless managed?
+
+      output, status = execute(['status', '--porcelain=v1', '-z'], @root_directory)
+      return [[], status] unless status == 0
+
+      entries = []
+      fields = output.split("\0")
+      index = 0
+      while index < fields.length
+        field = fields[index]
+        break if field == ''
+
+        index_status = field[0, 1]
+        worktree_status = field[1, 1]
+        path = field[3..-1]
+        original_path = nil
+        if index_status == 'R' || index_status == 'C' ||
+           worktree_status == 'R' || worktree_status == 'C'
+          index += 1
+          original_path = fields[index]
+        end
+        entries << {
+          index: index_status,
+          worktree: worktree_status,
+          path: path,
+          original_path: original_path
+        }
+        index += 1
+      end
+      [entries, 0]
+    end
+
     private
 
     def discover
@@ -250,6 +292,90 @@ module Mrbmacs
     describe_command :vc_previous_change, 'Go to previous change'
     def vc_previous_change
       vc_move_change(:previous)
+    end
+
+    describe_command :vc_stage_file, 'Stage the current file in Git.'
+    def vc_stage_file
+      if @current_buffer.filename == ''
+        message 'Buffer is not visiting a file'
+        return false
+      end
+
+      if @frame.view_win.sci_get_modify != 0
+        message 'Buffer has unsaved changes'
+        return false
+      end
+
+      vcinfo = @current_buffer.vcinfo || VC.new(@current_buffer.directory)
+      unless vcinfo.managed?
+        message 'File is not in a Git repository'
+        return false
+      end
+
+      output, status = vcinfo.stage(@current_buffer.filename)
+      unless status == 0
+        message(output.chomp == '' ? 'Git add failed' : output.chomp)
+        return false
+      end
+
+      vc_refresh_gutter
+      message 'File staged'
+      true
+    end
+
+    describe_command :vc_status, 'Display the Git working tree status.'
+    def vc_status
+      source_buffer = @current_buffer
+      vcinfo = source_buffer.vcinfo || VC.new(source_buffer.directory)
+      unless vcinfo.managed?
+        message 'File is not in a Git repository'
+        return false
+      end
+
+      entries, status = vcinfo.status
+      unless status == 0
+        message 'Git status failed'
+        return false
+      end
+
+      header = "+-- Index: M modified/staged, A added, D deleted, R renamed\n" \
+               "|+-- Worktree: M modified, D deleted\n" \
+               "||  ?? untracked\n"
+      paths = [nil, nil, nil]
+      if entries.empty?
+        output = "#{header}Working tree clean\n"
+        paths << nil
+      else
+        lines = entries.map do |entry|
+          path = vc_status_display_path(entry[:path])
+          unless entry[:original_path].nil?
+            path = "#{vc_status_display_path(entry[:original_path])} -> #{path}"
+          end
+          paths << entry[:path]
+          "#{entry[:index]}#{entry[:worktree]} #{path}"
+        end
+        output = "#{header}#{lines.join("\n")}\n"
+      end
+
+      setup_result_buffer('*VC Status*')
+      @frame.view_win.sci_set_read_only(0)
+      @frame.view_win.sci_set_text(output)
+      @current_buffer.mode = VCStatusMode.instance
+      @current_buffer.mode.root_directory = vcinfo.root_directory
+      @current_buffer.mode.paths = paths
+      update_buffer_mode(@current_buffer)
+      @frame.view_win.sci_set_save_point
+      @frame.view_win.sci_set_read_only(1)
+      true
+    end
+
+    private
+
+    def vc_status_display_path(path)
+      escaped = path.gsub('\\') { '\\\\' }
+      escaped = escaped.gsub("\n") { '\\n' }
+      escaped = escaped.gsub("\r") { '\\r' }
+      escaped.gsub("\t") { '\\t' }
     end
   end
 end
