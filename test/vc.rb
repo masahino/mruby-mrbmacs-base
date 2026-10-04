@@ -145,6 +145,34 @@ assert('VC stage rejects a path outside the repository') do
   assert_include output, 'outside the repository'
 end
 
+assert('VC unstage restores only the index for a repository-relative path') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['restore', '--staged', '--', 'lib/file name.rb'] => ['', 0]
+  }, calls)
+  vcinfo = Mrbmacs::VC.new('/work/project/lib', runner)
+
+  assert_equal ['', 0], vcinfo.unstage('/work/project/lib/file name.rb')
+  assert_equal ['/work/project', ['restore', '--staged', '--', 'lib/file name.rb']], calls.last
+end
+
+assert('VC unstage rejects a path outside the repository') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0]
+  }, calls)
+  vcinfo = Mrbmacs::VC.new('/work/project', runner)
+  previous_calls = calls.length
+  output, status = vcinfo.unstage('/work/another/file.rb')
+
+  assert_equal 1, status
+  assert_include output, 'outside the repository'
+  assert_equal previous_calls, calls.length
+end
+
 assert('VC status runs in the repository root') do
   calls = []
   runner = recording_vc_runner({
@@ -452,6 +480,65 @@ assert('vc_stage_file reports a git add failure') do
 
   assert_false app.vc_stage_file
   assert_equal 'git add failed', app.frame.echo_message
+end
+
+assert('vc_unstage_file accepts unsaved changes and refreshes the gutter') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['restore', '--staged', '--', 'lib/file.rb'] => ['', 0],
+    ['diff', '--no-ext-diff', '--unified=0', 'HEAD', '--', 'lib/file.rb'] => ['', 0]
+  }, calls)
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.filename = '/work/project/lib/file.rb'
+  app.current_buffer.directory = '/work/project/lib'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project/lib', runner)
+  view = app.frame.view_win
+  view.test_return[Scintilla::SCI_GETMODIFY] = 1
+  before_delete = view.count_of(Scintilla::SCI_MARKERDELETEALL)
+
+  assert_true app.vc_unstage_file
+  assert_include calls, ['/work/project', ['restore', '--staged', '--', 'lib/file.rb']]
+  assert_equal 3, view.count_of(Scintilla::SCI_MARKERDELETEALL) - before_delete
+  assert_equal 'File unstaged', app.frame.echo_message
+end
+
+assert('vc_unstage_file rejects a buffer not visiting a file') do
+  app = Mrbmacs::TestSupport::Application.new
+
+  assert_false app.vc_unstage_file
+  assert_equal 'Buffer is not visiting a file', app.frame.echo_message
+end
+
+assert('vc_unstage_file rejects a file not managed by Git') do
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.filename = '/work/file.rb'
+  app.current_buffer.directory = '/work'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new(
+    '/work', vc_runner(['rev-parse', '--show-toplevel'] => ['', 128])
+  )
+
+  assert_false app.vc_unstage_file
+  assert_equal 'File is not in a Git repository', app.frame.echo_message
+end
+
+assert('vc_unstage_file reports a git restore failure without refreshing the gutter') do
+  runner = vc_runner(
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['restore', '--staged', '--', 'lib/file.rb'] => ["pathspec did not match\n", 1]
+  )
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.filename = '/work/project/lib/file.rb'
+  app.current_buffer.directory = '/work/project/lib'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project/lib', runner)
+  view = app.frame.view_win
+  before_delete = view.count_of(Scintilla::SCI_MARKERDELETEALL)
+
+  assert_false app.vc_unstage_file
+  assert_equal before_delete, view.count_of(Scintilla::SCI_MARKERDELETEALL)
+  assert_equal 'pathspec did not match', app.frame.echo_message
 end
 
 assert('vc_status displays the working tree status in a read-only buffer') do

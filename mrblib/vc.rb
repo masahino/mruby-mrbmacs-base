@@ -100,6 +100,15 @@ module Mrbmacs
       execute(['add', '--', relative_path], @root_directory)
     end
 
+    def unstage(filename)
+      return ['', 1] unless managed?
+
+      relative_path, error = repository_relative_path(filename)
+      return [error, 1] unless error.nil?
+
+      execute(['restore', '--staged', '--', relative_path], @root_directory)
+    end
+
     def status
       return ['', 1] unless managed?
 
@@ -320,6 +329,30 @@ module Mrbmacs
 
       vc_refresh_gutter
       message 'File staged'
+      true
+    end
+
+    describe_command :vc_unstage_file, 'Unstage the current file in Git.'
+    def vc_unstage_file
+      if @current_buffer.filename == ''
+        message 'Buffer is not visiting a file'
+        return false
+      end
+
+      vcinfo = @current_buffer.vcinfo || VC.new(@current_buffer.directory)
+      unless vcinfo.managed?
+        message 'File is not in a Git repository'
+        return false
+      end
+
+      output, status = vcinfo.unstage(@current_buffer.filename)
+      unless status == 0
+        message(output.chomp == '' ? 'Git unstage failed' : output.chomp)
+        return false
+      end
+
+      vc_refresh_gutter
+      message 'File unstaged'
       true
     end
 
