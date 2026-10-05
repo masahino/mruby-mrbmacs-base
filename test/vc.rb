@@ -173,6 +173,20 @@ assert('VC unstage rejects a path outside the repository') do
   assert_equal previous_calls, calls.length
 end
 
+assert('VC commit passes the message as one argument in the repository root') do
+  calls = []
+  commit_message = "Fix John's file; keep $HOME"
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['commit', '-m', commit_message] => ["[main abc123] #{commit_message}\n", 0]
+  }, calls)
+  vcinfo = Mrbmacs::VC.new('/work/project/lib', runner)
+
+  assert_equal 0, vcinfo.commit(commit_message)[1]
+  assert_equal ['/work/project', ['commit', '-m', commit_message]], calls.last
+end
+
 assert('VC status runs in the repository root') do
   calls = []
   runner = recording_vc_runner({
@@ -541,6 +555,141 @@ assert('vc_unstage_file reports a git restore failure without refreshing the gut
   assert_equal 'pathspec did not match', app.frame.echo_message
 end
 
+assert('vc_commit commits only the staged index and refreshes the gutter') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['status', '--porcelain=v1', '-z'] => ["M  lib/file.rb\0 M lib/other.rb\0", 0],
+    ['commit', '-m', 'Fix file'] => ["[main abc123] Fix file\n", 0],
+    ['diff', '--no-ext-diff', '--unified=0', 'HEAD', '--', 'lib/file.rb'] => ['', 0]
+  }, calls)
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.filename = '/work/project/lib/file.rb'
+  app.current_buffer.directory = '/work/project/lib'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project/lib', runner)
+  view = app.frame.view_win
+  before_delete = view.count_of(Scintilla::SCI_MARKERDELETEALL)
+  prompts = []
+  app.frame.define_singleton_method(:echo_gets) do |prompt, default|
+    prompts << [prompt, default]
+    'Fix file'
+  end
+
+  assert_true app.vc_commit
+  assert_equal [['Commit message: ', '']], prompts
+  assert_include calls, ['/work/project', ['commit', '-m', 'Fix file']]
+  assert_equal 3, view.count_of(Scintilla::SCI_MARKERDELETEALL) - before_delete
+  assert_equal 'Committed staged changes', app.frame.echo_message
+end
+
+assert('vc_commit skips the prompt when only unstaged changes exist') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['status', '--porcelain=v1', '-z'] => [" M lib/file.rb\0?? lib/new.rb\0", 0]
+  }, calls)
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.directory = '/work/project'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project', runner)
+  app.frame.define_singleton_method(:echo_gets) { |_prompt, _default| raise 'unexpected prompt' }
+
+  assert_false app.vc_commit
+  assert_equal 'No staged changes', app.frame.echo_message
+  assert_false calls.any? { |_directory, arguments| arguments[0] == 'commit' }
+end
+
+assert('vc_commit cancels without running git commit') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['status', '--porcelain=v1', '-z'] => ["M  lib/file.rb\0", 0]
+  }, calls)
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.directory = '/work/project'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project', runner)
+  app.frame.define_singleton_method(:echo_gets) { |_prompt, _default| nil }
+
+  assert_false app.vc_commit
+  assert_false calls.any? { |_directory, arguments| arguments[0] == 'commit' }
+end
+
+assert('vc_commit rejects a blank message') do
+  calls = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['status', '--porcelain=v1', '-z'] => ["M  lib/file.rb\0", 0]
+  }, calls)
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.directory = '/work/project'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project', runner)
+  app.frame.define_singleton_method(:echo_gets) { |_prompt, _default| '   ' }
+
+  assert_false app.vc_commit
+  assert_equal 'Commit message is empty', app.frame.echo_message
+  assert_false calls.any? { |_directory, arguments| arguments[0] == 'commit' }
+end
+
+assert('vc_commit preserves the message for a retry after git fails') do
+  calls = []
+  responses = ['Fix file', nil]
+  defaults = []
+  runner = recording_vc_runner({
+    ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'] => ["main\n", 0],
+    ['status', '--porcelain=v1', '-z'] => ["M  lib/file.rb\0", 0],
+    ['commit', '-m', 'Fix file'] => ["hook rejected commit\n", 1]
+  }, calls)
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.directory = '/work/project'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project', runner)
+  app.frame.define_singleton_method(:echo_gets) do |_prompt, default|
+    defaults << default
+    responses.shift
+  end
+
+  assert_false app.vc_commit
+  assert_equal 'hook rejected commit', app.frame.echo_message
+  assert_false app.vc_commit
+  assert_equal ['', 'Fix file'], defaults
+  assert_equal 1, calls.count { |_directory, arguments| arguments[0] == 'commit' }
+end
+
+assert('vc_commit refreshes the status buffer after success') do
+  committed = false
+  calls = []
+  runner = proc do |directory, arguments|
+    calls << [directory, arguments]
+    case arguments[0]
+    when 'rev-parse'
+      ["/work/project\n", 0]
+    when 'symbolic-ref'
+      ["main\n", 0]
+    when 'status'
+      [committed ? '' : "M  lib/file.rb\0", 0]
+    when 'commit'
+      committed = true
+      ["[main abc123] Fix file\n", 0]
+    else
+      ['', 1]
+    end
+  end
+  app = Mrbmacs::TestSupport::Application.new
+  app.current_buffer.mode = Mrbmacs::VCStatusMode.new
+  app.current_buffer.mode.root_directory = '/work/project'
+  app.current_buffer.vcinfo = Mrbmacs::VC.new('/work/project', runner)
+  app.define_singleton_method(:setup_result_buffer) { |_buffer_name| nil }
+  app.frame.define_singleton_method(:echo_gets) { |_prompt, _default| 'Fix file' }
+
+  assert_true app.vc_commit
+  assert_true app.frame.view_win.last_args(Scintilla::SCI_SETTEXT)[1].include?('Working tree clean')
+  assert_equal 'Committed staged changes', app.frame.echo_message
+  assert_equal '/work/project', calls.last[0]
+end
+
 assert('vc_status displays the working tree status in a read-only buffer') do
   runner = vc_runner(
     ['rev-parse', '--show-toplevel'] => ["/work/project\n", 0],
@@ -554,13 +703,11 @@ assert('vc_status displays the working tree status in a read-only buffer') do
   assert_true app.vc_status
   assert_equal '*VC Status*', app.current_buffer.name
   output = app.frame.view_win.last_args(Scintilla::SCI_SETTEXT)[1]
-  assert_true output.start_with?("+-- Index: M modified/staged")
-  assert_true output.include?("|+-- Worktree: M modified, D deleted\n")
-  assert_true output.include?("||  ?? untracked\n")
+  assert_true output.start_with?("+-- Staged (index)\n|+-- Unstaged (working tree)\n")
   assert_true output.include?(" M lib/file.rb\n")
   assert_true output.include?("?? test/new.rb\n")
   assert_equal 'vc-status', app.current_buffer.mode.name
-  assert_equal [nil, nil, nil, 'lib/file.rb', 'test/new.rb'], app.current_buffer.mode.paths
+  assert_equal [nil, nil, 'lib/file.rb', 'test/new.rb'], app.current_buffer.mode.paths
   assert_equal [1], app.frame.view_win.last_args(Scintilla::SCI_SETREADONLY)
 end
 
@@ -597,10 +744,10 @@ assert('VCStatusMode opens the file for the current status line') do
   app = Mrbmacs::TestSupport::Application.new
   mode = Mrbmacs::VCStatusMode.new
   mode.root_directory = '/work/project'
-  mode.paths = [nil, nil, nil, 'lib/example.rb']
+  mode.paths = [nil, nil, 'lib/example.rb']
   app.current_buffer.mode = mode
   app.frame.view_win.test_return[Scintilla::SCI_GETCURRENTPOS] = 20
-  app.frame.view_win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 3
+  app.frame.view_win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 2
   app.frame.edit_win_list << app.frame.edit_win
   app.define_singleton_method(:other_window) { nil }
   opened_file = nil
@@ -615,10 +762,10 @@ assert('VCStatusMode ignores a header line') do
   app = Mrbmacs::TestSupport::Application.new
   mode = Mrbmacs::VCStatusMode.new
   mode.root_directory = '/work/project'
-  mode.paths = [nil, nil, nil, 'lib/example.rb']
+  mode.paths = [nil, nil, 'lib/example.rb']
   app.current_buffer.mode = mode
   app.frame.view_win.test_return[Scintilla::SCI_GETCURRENTPOS] = 0
-  app.frame.view_win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 0
+  app.frame.view_win.test_return[Scintilla::SCI_LINEFROMPOSITION] = 1
   opened_file = nil
   app.define_singleton_method(:find_file) { |file| opened_file = file }
 

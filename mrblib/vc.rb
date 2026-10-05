@@ -109,6 +109,12 @@ module Mrbmacs
       execute(['restore', '--staged', '--', relative_path], @root_directory)
     end
 
+    def commit(message)
+      return ['', 1] unless managed?
+
+      execute(['commit', '-m', message], @root_directory)
+    end
+
     def status
       return ['', 1] unless managed?
 
@@ -356,6 +362,57 @@ module Mrbmacs
       true
     end
 
+    describe_command :vc_commit, 'Commit staged changes in Git.'
+    def vc_commit
+      source_buffer = @current_buffer
+      directory = if source_buffer.mode.is_a?(VCStatusMode)
+                    source_buffer.mode.root_directory
+                  else
+                    source_buffer.directory
+                  end
+      vcinfo = source_buffer.vcinfo || VC.new(directory)
+      unless vcinfo.managed?
+        message 'File is not in a Git repository'
+        return false
+      end
+
+      entries, status = vcinfo.status
+      unless status == 0
+        message 'Git status failed'
+        return false
+      end
+      unless entries.any? { |entry| entry[:index] != ' ' && entry[:index] != '?' }
+        message 'No staged changes'
+        return false
+      end
+
+      commit_message = @vc_commit_message || ''
+      commit_message = @frame.echo_gets('Commit message: ', commit_message)
+      return false if commit_message.nil?
+
+      commit_message = commit_message.chomp
+      unless commit_message =~ /\S/
+        message 'Commit message is empty'
+        return false
+      end
+
+      output, status = vcinfo.commit(commit_message)
+      unless status == 0
+        @vc_commit_message = commit_message
+        message(output.chomp == '' ? 'Git commit failed' : output.chomp)
+        return false
+      end
+
+      @vc_commit_message = nil
+      if source_buffer.mode.is_a?(VCStatusMode)
+        vc_status
+      else
+        vc_refresh_gutter
+      end
+      message 'Committed staged changes'
+      true
+    end
+
     describe_command :vc_status, 'Display the Git working tree status.'
     def vc_status
       source_buffer = @current_buffer
@@ -371,10 +428,9 @@ module Mrbmacs
         return false
       end
 
-      header = "+-- Index: M modified/staged, A added, D deleted, R renamed\n" \
-               "|+-- Worktree: M modified, D deleted\n" \
-               "||  ?? untracked\n"
-      paths = [nil, nil, nil]
+      header = "+-- Staged (index)\n" \
+               "|+-- Unstaged (working tree)\n"
+      paths = [nil, nil]
       if entries.empty?
         output = "#{header}Working tree clean\n"
         paths << nil
@@ -393,6 +449,7 @@ module Mrbmacs
       setup_result_buffer('*VC Status*')
       @frame.view_win.sci_set_read_only(0)
       @frame.view_win.sci_set_text(output)
+      @current_buffer.vcinfo = vcinfo
       @current_buffer.mode = VCStatusMode.instance
       @current_buffer.mode.root_directory = vcinfo.root_directory
       @current_buffer.mode.paths = paths
